@@ -20,6 +20,7 @@
     "inbox": "인박스",
     "notifications": "알림",
     "contacts": "연락처",
+    "appointments": "예약",
     "pipelines": "파이프라인",
     "broadcasts": "브로드캐스트",
     "automations": "자동화",
@@ -1502,6 +1503,7 @@
       "templates": "템플릿",
       "fields": "필드 & 태그",
       "deals": "딜 & 통화",
+      "scheduling": "예약 관리",
       "members": "팀원",
       "api": "API 키"
     },

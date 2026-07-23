@@ -1,5 +1,5 @@
-import type { AccountRole } from "@/lib/auth/roles";
-import type { InteractiveMessagePayload } from "@/lib/whatsapp/interactive";
+import type { AccountRole } from '@/lib/auth/roles';
+import type { InteractiveMessagePayload } from '@/lib/whatsapp/interactive';
 
 export type {
   InteractiveMessagePayload,
@@ -8,7 +8,7 @@ export type {
   InteractiveButton,
   InteractiveListRow,
   InteractiveListSection,
-} from "@/lib/whatsapp/interactive";
+} from '@/lib/whatsapp/interactive';
 
 export interface Profile {
   id: string;
@@ -87,7 +87,7 @@ export interface AccountInvitation {
   id: string;
   account_id: string;
   /** Roles offered via invite — owner is never offered. */
-  role: Exclude<AccountRole, "owner">;
+  role: Exclude<AccountRole, 'owner'>;
   created_by_user_id: string | null;
   label: string | null;
   created_at: string;
@@ -216,7 +216,8 @@ export type ContentType =
   | 'template'
   /** Customer tapped a reply button or list row on a message we sent. */
   | 'interactive';
-export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+export type MessageStatus =
+  'sending' | 'sent' | 'delivered' | 'read' | 'failed';
 
 export interface Message {
   id: string;
@@ -378,8 +379,10 @@ export interface Deal {
   assignee?: Profile;
 }
 
-export type BroadcastStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
-export type RecipientStatus = 'pending' | 'sent' | 'delivered' | 'read' | 'replied' | 'failed';
+export type BroadcastStatus =
+  'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
+export type RecipientStatus =
+  'pending' | 'sent' | 'delivered' | 'read' | 'replied' | 'failed';
 
 export interface Broadcast {
   id: string;
@@ -426,6 +429,131 @@ export interface BroadcastRecipient {
 }
 
 // ============================================================
+// Native appointments (migration 037)
+// ============================================================
+
+export type AppointmentStatus =
+  'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+export type AppointmentSource = 'staff' | 'whatsapp' | 'automation';
+
+export interface AppointmentService {
+  id: string;
+  account_id: string;
+  name: string;
+  description?: string | null;
+  duration_minutes: number;
+  buffer_before_minutes: number;
+  buffer_after_minutes: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StaffSchedulingProfile {
+  id: string;
+  account_id: string;
+  user_id: string;
+  timezone: string;
+  is_bookable: boolean;
+  created_at: string;
+  updated_at: string;
+  profile?: Pick<Profile, 'full_name' | 'avatar_url'>;
+}
+
+export interface StaffAvailabilityRule {
+  id: string;
+  account_id: string;
+  staff_profile_id: string;
+  weekday: number;
+  start_time: string;
+  end_time: string;
+}
+
+export interface StaffAvailabilityException {
+  id: string;
+  account_id: string;
+  staff_profile_id: string;
+  starts_at: string;
+  ends_at: string;
+  is_available: boolean;
+  note?: string | null;
+}
+
+export interface Appointment {
+  id: string;
+  account_id: string;
+  contact_id: string;
+  service_id: string;
+  staff_profile_id: string;
+  starts_at: string;
+  ends_at: string;
+  timezone: string;
+  status: AppointmentStatus;
+  source: AppointmentSource;
+  notes?: string | null;
+  cancellation_reason?: string | null;
+  revision: number;
+  confirmed_at?: string | null;
+  cancelled_at?: string | null;
+  completed_at?: string | null;
+  created_by_user_id?: string | null;
+  created_at: string;
+  updated_at: string;
+  contact?: Contact;
+  service?: AppointmentService;
+  staff?: StaffSchedulingProfile;
+}
+
+export interface AppointmentReminderRule {
+  id: string;
+  account_id: string;
+  offset_minutes: number;
+  template_id?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AppointmentReminderJobStatus =
+  'pending' | 'running' | 'sent' | 'failed' | 'cancelled';
+
+export interface AppointmentReminderJob {
+  id: string;
+  account_id: string;
+  appointment_id: string;
+  reminder_rule_id: string;
+  appointment_revision: number;
+  run_at: string;
+  status: AppointmentReminderJobStatus;
+  attempts: number;
+  next_attempt_at?: string | null;
+  whatsapp_message_id?: string | null;
+  error_message?: string | null;
+}
+
+export interface AppointmentEvent {
+  id: string;
+  account_id: string;
+  appointment_id: string;
+  actor_user_id?: string | null;
+  event_type: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface AppointmentContext {
+  id: string;
+  start_time: string;
+  end_time: string;
+  local_date: string;
+  local_time: string;
+  timezone: string;
+  service_name: string;
+  staff_name: string;
+  manage_action?: string;
+}
+
+// ============================================================
 // Automations (migration 006)
 // ============================================================
 
@@ -437,6 +565,13 @@ export type AutomationTriggerType =
   | 'conversation_assigned'
   | 'tag_added'
   | 'time_based'
+  | 'appointment_created'
+  | 'appointment_confirmed'
+  | 'appointment_rescheduled'
+  | 'appointment_cancelled'
+  | 'appointment_reminder_due'
+  | 'appointment_completed'
+  | 'appointment_no_show'
   /** Customer tapped a reply button / list row whose id matches; lets
    *  multi-step menus be chained across automations. */
   | 'interactive_reply';
@@ -454,7 +589,13 @@ export type AutomationStepType =
   | 'wait'
   | 'condition'
   | 'send_webhook'
-  | 'close_conversation';
+  | 'close_conversation'
+  | 'create_appointment'
+  | 'confirm_appointment'
+  | 'offer_appointment_slots'
+  | 'reschedule_appointment'
+  | 'cancel_appointment'
+  | 'send_appointment_template';
 
 export type AutomationLogStatus = 'success' | 'partial' | 'failed';
 
@@ -540,10 +681,7 @@ export interface WaitStepConfig {
 }
 
 export type ConditionSubject =
-  | 'contact_field'
-  | 'tag_presence'
-  | 'message_content'
-  | 'time_of_day';
+  'contact_field' | 'tag_presence' | 'message_content' | 'time_of_day';
 
 export interface ConditionStepConfig {
   subject: ConditionSubject;
@@ -559,6 +697,31 @@ export interface SendWebhookStepConfig {
   body_template?: string;
 }
 
+export interface CreateAppointmentStepConfig {
+  service_id: string;
+  staff_profile_id: string;
+  /** ISO value or an interpolated variable such as {{vars.starts_at}}. */
+  starts_at: string;
+  timezone?: string;
+  confirm_immediately?: boolean;
+}
+
+export interface AppointmentMutationStepConfig {
+  /** Defaults to the appointment carried in automation context. */
+  appointment_id?: string;
+  starts_at?: string;
+}
+
+export interface OfferAppointmentSlotsStepConfig {
+  service_id: string;
+  staff_profile_id?: string;
+  date: string;
+  timezone?: string;
+  limit?: number;
+}
+
+export type SendAppointmentTemplateStepConfig = SendTemplateStepConfig;
+
 export type AutomationStepConfig =
   | SendMessageStepConfig
   | SendButtonsStepConfig
@@ -571,6 +734,10 @@ export type AutomationStepConfig =
   | WaitStepConfig
   | ConditionStepConfig
   | SendWebhookStepConfig
+  | CreateAppointmentStepConfig
+  | AppointmentMutationStepConfig
+  | OfferAppointmentSlotsStepConfig
+  | SendAppointmentTemplateStepConfig
   | Record<string, never>
   | Record<string, unknown>;
 
