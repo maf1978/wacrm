@@ -6,6 +6,7 @@ import {
   LayoutGrid,
   Palette,
   PlugZap,
+  Share2,
   Shield,
   Tags,
   User,
@@ -33,6 +34,7 @@ export const SETTINGS_SECTIONS = [
   'fields',
   'deals',
   'scheduling',
+  'social',
   'members',
   'api',
 ] as const;
@@ -108,6 +110,12 @@ export const SECTION_META: Record<SettingsSection, SectionMeta> = {
     id: 'scheduling',
     label: 'Scheduling',
     icon: CalendarClock,
+    group: 'workspace',
+  },
+  social: {
+    id: 'social',
+    label: 'Social accounts',
+    icon: Share2,
     group: 'workspace',
   },
   members: {
