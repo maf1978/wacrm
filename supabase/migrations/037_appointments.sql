@@ -181,7 +181,9 @@ DROP TRIGGER IF EXISTS accounts_seed_appointment_reminders ON accounts;
 CREATE TRIGGER accounts_seed_appointment_reminders
 AFTER INSERT ON accounts FOR EACH ROW EXECUTE FUNCTION seed_default_appointment_reminders();
 INSERT INTO appointment_reminder_rules (account_id, offset_minutes)
-SELECT id, offset FROM accounts CROSS JOIN (VALUES (1440), (120)) x(offset)
+SELECT id, reminder_offset
+FROM accounts
+CROSS JOIN (VALUES (1440), (120)) AS defaults(reminder_offset)
 ON CONFLICT DO NOTHING;
 
 -- Account-scoped RLS. Service-role workers bypass these policies.
