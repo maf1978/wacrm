@@ -379,6 +379,32 @@ export interface Deal {
   assignee?: Profile;
 }
 
+// ============================================================
+// Orders (migration 039)
+// ============================================================
+
+export type OrderStatus = 'draft' | 'pending' | 'confirmed' | 'cancelled';
+
+export interface Order {
+  id: string;
+  account_id: string;
+  user_id: string;
+  contact_id: string | null;
+  order_number?: string | null;
+  title: string;
+  items_note?: string | null;
+  total: number;
+  currency: string;
+  status: OrderStatus;
+  confirmed_at?: string | null;
+  confirmed_by_user_id?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  contact?: Contact | null;
+  confirmed_by?: Pick<Profile, 'full_name' | 'email'> | null;
+}
+
 export type BroadcastStatus =
   'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
 export type RecipientStatus =
