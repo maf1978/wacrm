@@ -1,0 +1,16 @@
+
+> wacrm@0.8.0 dev
+> next dev --hostname 127.0.0.1 --port 3014
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://127.0.0.1:3014
+- Network:       http://127.0.0.1:3014
+- Environments: .env.local
+✓ Ready in 1920ms
+
+ GET / 200 in 1749ms (next.js: 650ms, proxy.ts: 186ms, application-code: 914ms)
+ GET / 200 in 284ms (next.js: 23ms, proxy.ts: 29ms, application-code: 232ms)
+ GET / 200 in 239ms (next.js: 12ms, proxy.ts: 10ms, application-code: 218ms)
+ GET /icon 200 in 430ms (proxy.ts: 10ms)
+ GET / 200 in 170ms (next.js: 10ms, proxy.ts: 7ms, application-code: 152ms)
+ GET / 200 in 183ms (next.js: 10ms, proxy.ts: 6ms, application-code: 167ms)

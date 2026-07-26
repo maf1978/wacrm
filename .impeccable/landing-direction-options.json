@@ -1,0 +1,36 @@
+{
+  "title": "Elige el mundo visual de la nueva landing WACRM",
+  "question": "La propuesta principal convierte el recorrido de una conversación en un sistema visible. Puedes aprobarla, elegir una alternativa, reorientarla o pedir otra ronda.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Centro de rutas conversacionales",
+      "kicker": "PROPUESTA PRINCIPAL",
+      "lineage": "señalética de terminales, tableros de salidas y mapas operativos",
+      "body": "Un gran tablero muestra cómo cada mensaje entra, se clasifica y avanza hacia una respuesta, cita, venta o seguimiento. La primera pantalla demuestra el mecanismo y mantiene Solicitar demostración siempre visible. El recorrido continúa por estaciones de producto y termina en una invitación clara. Interacción distintiva: una ruta se ilumina al recorrerla. Riesgo honesto: exige disciplina para que la señalética no parezca transporte literal.",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-night-flight-six-pack-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/signals-instruments-night-flight-six-pack.webp"
+    },
+    {
+      "id": "challenger-glass",
+      "label": "Muro operativo de vidrio",
+      "kicker": "ALTERNATIVA",
+      "lineage": "mamparas de vidrio artesanal con cuadrícula estructural",
+      "body": "Cada capacidad vive en un panel de vidrio claro; las acciones activas se iluminan en cobalto, ámbar o verde. Es modular, premium y muy legible, aunque explica peor el movimiento entre conversación y resultado.",
+      "hero": "https://impeccable.style/worlds/cards/craft-making-glazier-colorfield-partition-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/craft-making-glazier-colorfield-partition.webp"
+    },
+    {
+      "id": "challenger-data",
+      "label": "Retratos de automatización",
+      "kicker": "ALTERNATIVA",
+      "lineage": "retratos de datos de W. E. B. Du Bois",
+      "body": "Diagramas audaces convierten conversaciones, citas y automatizaciones en argumentos visuales memorables. Tiene gran fuerza editorial y demostrativa, pero requiere más explicación para una audiencia empresarial general.",
+      "hero": "https://impeccable.style/worlds/cards/dubois-data-portraits-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/dubois-data-portraits.webp"
+    }
+  ],
+  "reroll": true,
+  "canon": true,
+  "steer": true
+}
