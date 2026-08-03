@@ -1,33 +1,44 @@
 import crypto from 'node:crypto'
 
 /**
- * Verify the HMAC-SHA256 signature Meta attaches to webhook POSTs.
+ * Verify the HMAC-SHA256 signature on inbound webhook POSTs.
  *
- * Meta signs the raw request body with your App Secret and sends the
- * result in the `x-hub-signature-256: sha256=<hex>` header. Without
- * verification, anyone who knows our webhook URL can POST fabricated
- * status updates and drift broadcast counts arbitrarily.
+ * Supports two signing formats:
+ *   1. Meta format:  `x-hub-signature-256: sha256=<hex>` signed with META_APP_SECRET
+ *   2. Kapso format: `x-webhook-signature: <hex>` signed with KAPOO_WEBHOOK_SECRET
  *
- * Reference:
- *   https://developers.facebook.com/docs/graph-api/webhooks/getting-started#verify-payloads
+ * Meta format is used when the webhook is configured as "Meta webhook" in
+ * Kapso (raw Meta payload forwarding). Kapso format is used when the webhook
+ * is configured as "Kapso webhook" (Kapso's own payload structure).
  *
  * Contract:
- *   `META_APP_SECRET` is **required**. If it's missing we fail closed —
- *   every request is rejected until the operator configures the
- *   secret. A previous version fell open with a warning log, which is
- *   unsafe for a public template: anyone who forgets the env var would
- *   be running a fully spoofable webhook.
+ *   - If `KAPOO_WEBHOOK_SECRET` is set, prefer Kapso signature verification.
+ *   - Otherwise, fall back to Meta signature verification with `META_APP_SECRET`.
+ *   - If neither is set, reject every request.
  */
 export function verifyMetaWebhookSignature(
   rawBody: string,
   signatureHeader: string | null,
 ): boolean {
+  // Kapso webhook format: X-Webhook-Signature
+  const kapsoSecret = process.env.KAPOSO_WEBHOOK_SECRET
+  if (kapsoSecret) {
+    const kapsoSig = signatureHeader // caller should pass the right header
+    if (!kapsoSig) return false
+    const expected =
+      crypto.createHmac('sha256', kapsoSecret).update(rawBody).digest('hex')
+    const a = Buffer.from(kapsoSig)
+    const b = Buffer.from(expected)
+    if (a.length !== b.length) return false
+    return crypto.timingSafeEqual(a, b)
+  }
+
+  // Meta format: x-hub-signature-256: sha256=<hex>
   const secret = process.env.META_APP_SECRET
   if (!secret) {
     console.error(
-      '[webhook] META_APP_SECRET is not set — rejecting request. ' +
-        'Configure the env var (Meta → App Settings → Basic → App Secret) ' +
-        'to enable signature verification.',
+      '[webhook] Neither KAPOSO_WEBHOOK_SECRET nor META_APP_SECRET is set — rejecting request. ' +
+        'Configure at least one to enable signature verification.',
     )
     return false
   }

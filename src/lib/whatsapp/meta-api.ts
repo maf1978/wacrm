@@ -10,7 +10,13 @@
  */
 
 const META_API_VERSION = 'v21.0'
-const META_API_BASE = `https://graph.facebook.com/${META_API_VERSION}`
+/**
+ * WhatsApp API base URL. Defaults to Meta's Cloud API but can be
+ * overridden to use a BSP proxy like Kapso (`https://api.kapso.ai/meta/whatsapp/v24.0`).
+ */
+const META_API_BASE =
+  process.env.WHATSAPP_API_BASE_URL ||
+  `https://graph.facebook.com/${META_API_VERSION}`
 
 export interface MetaSendResult {
   messageId: string

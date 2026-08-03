@@ -68,10 +68,16 @@ export function phoneVariants(sanitized: string): string[] {
     if (v && !seen.has(v)) seen.add(v)
   }
 
-  // 1. Original
+  // 1. Original (digits only)
   push(sanitized)
 
-  // 2. Insert a 0 after each plausible country-code length
+  // 2. E.164 with + prefix — many test/sandbox recipients are registered
+  //    with the + and Meta rejects the digits-only format.
+  if (!sanitized.startsWith('+')) {
+    push('+' + sanitized)
+  }
+
+  // 3. Insert a 0 after each plausible country-code length
   for (const ccLen of [1, 2, 3]) {
     if (sanitized.length <= ccLen) continue
     const cc = sanitized.slice(0, ccLen)
@@ -81,7 +87,7 @@ export function phoneVariants(sanitized: string): string[] {
     }
   }
 
-  // 3. Remove a leading 0 after each plausible country-code length
+  // 4. Remove a leading 0 after each plausible country-code length
   for (const ccLen of [1, 2, 3]) {
     if (sanitized.length <= ccLen + 1) continue
     const cc = sanitized.slice(0, ccLen)

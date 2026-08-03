@@ -402,6 +402,7 @@ export async function sendMessageToConversation(
   let workingPhone = sanitizedPhone;
   try {
     const variants = phoneVariants(sanitizedPhone);
+    console.log('[send-message] trying variants:', variants);
     let lastError: unknown = null;
 
     for (const variant of variants) {
@@ -409,9 +410,11 @@ export async function sendMessageToConversation(
         waMessageId = await attempt(variant);
         workingPhone = variant;
         lastError = null;
+        console.log('[send-message] SUCCESS with variant:', variant);
         break;
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
+        console.log('[send-message] variant', variant, 'failed:', message.substring(0, 120));
         if (!isRecipientNotAllowedError(message)) {
           throw err;
         }

@@ -48,6 +48,14 @@ export async function dispatchInboundToAiReply(
     const db = supabaseAdmin()
 
     const config = await loadAiConfig(db, accountId)
+    console.log('[ai auto-reply] config loaded:', {
+      conversationId,
+      accountId,
+      hasConfig: !!config,
+      autoReplyEnabled: config?.autoReplyEnabled,
+      model: config?.model,
+      provider: config?.provider,
+    })
     if (!config || !config.autoReplyEnabled) return
 
     // Deterministic, user-configured responders win over the LLM — the
@@ -73,6 +81,13 @@ export async function dispatchInboundToAiReply(
       .eq('id', conversationId)
       .maybeSingle()
     if (convErr || !conv) return
+    console.log('[ai auto-reply] conversation state:', {
+      conversationId,
+      assigned_agent_id: conv.assigned_agent_id,
+      ai_autoreply_disabled: conv.ai_autoreply_disabled,
+      ai_reply_count: conv.ai_reply_count,
+      maxReplies: config.autoReplyMaxPerConversation,
+    })
     if (conv.assigned_agent_id) return // a human owns this thread
     if (conv.ai_autoreply_disabled) return // handed off / turned off here
     // Cheap early-out; the authoritative cap check is the atomic claim
@@ -116,6 +131,17 @@ export async function dispatchInboundToAiReply(
       config,
       systemPrompt,
       messages,
+    })
+
+    // DEBUG: log what the model returned
+    console.log('[ai auto-reply] model response:', {
+      conversationId,
+      accountId,
+      handoff,
+      textPreview: text?.substring(0, 200),
+      textLength: text?.length,
+      model: config.model,
+      provider: config.provider,
     })
 
     // Record token spend on the account's BYO key. Fire-and-forget so it
