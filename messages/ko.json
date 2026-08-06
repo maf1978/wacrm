@@ -1515,6 +1515,8 @@
       "notConnected": "연결되지 않음",
       "connectedDesc": "액세스 토큰으로 Meta 인증이 완료되었습니다. 웹훅이 실제로 연결되었는지는 아래 등록 상태를 확인하세요.",
       "notConnectedDesc": "아래에서 Meta API 자격 증명을 설정해 WhatsApp 비즈니스 계정을 연결하세요.",
+      "kapsoModeTitle": "Kapso 프록시 모드가 감지되었습니다",
+      "kapsoModeDesc": "이 인스턴스는 WhatsApp 트래픽을 <strong class=\"text-foreground\">Kapso</strong>를 통해 전송합니다. Kapso 대시보드에서 번호를 연결하고, 웹훅 유형(<strong class=\"text-foreground\">meta</strong>)을 아래 웹훅 콜백 URL로 지정한 뒤, 액세스 토큰 자리에 Kapso <strong class=\"text-foreground\">API 키</strong>를 사용하세요. 아래 Meta PIN/등록 단계는 적용되지 않습니다.",
       "registered": "등록됨 — Meta가 wacrm으로 이벤트를 전달합니다",
       "notRegistered": "등록되지 않음 — Meta가 이벤트를 전달하지 않습니다",
       "verifyWithMeta": "Meta로 확인",

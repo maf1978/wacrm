@@ -9,6 +9,10 @@ export async function GET(
 ) {
   try {
     const { mediaId } = await params
+    // The webhook route forwards phone_number_id here when it built the
+    // media proxy URL — the Kapso proxy needs it on media lookups.
+    const phoneNumberId =
+      new URL(request.url).searchParams.get('phone_number_id') ?? undefined
 
     if (!mediaId) {
       return NextResponse.json(
@@ -65,7 +69,7 @@ export async function GET(
     const accessToken = decrypt(config.access_token)
 
     // Get the download URL from Meta
-    const mediaInfo = await getMediaUrl({ mediaId, accessToken })
+    const mediaInfo = await getMediaUrl({ mediaId, accessToken, phoneNumberId })
 
     // Download the binary data
     const { buffer, contentType } = await downloadMedia({

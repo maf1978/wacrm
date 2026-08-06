@@ -55,6 +55,9 @@ export function WhatsAppConfig() {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('unknown');
   const [resetReason, setResetReason] = useState<ResetReason>(null);
   const [statusMessage, setStatusMessage] = useState<string>('');
+  // Which provider this instance talks to: 'meta' (direct Cloud API) or
+  // 'kapso' (Kapso proxy). Drives the provider-specific guidance banner.
+  const [provider, setProvider] = useState<'meta' | 'kapso' | null>(null);
   // Guards against re-hydrating the form when the load effect below
   // re-runs for reasons unrelated to actually switching accounts —
   // e.g. Supabase's onAuthStateChange fires a token refresh (new
@@ -133,29 +136,35 @@ export function WhatsAppConfig() {
       // Clear any stale probe result when reloading the row.
       setRegistrationProbe(null);
 
-      // Then verify health via the API (decrypts token + pings Meta)
-      if (data) {
-        try {
-          const res = await fetch('/api/whatsapp/config', { method: 'GET' });
-          const payload = await res.json();
+      // Then verify health via the API (decrypts token + pings Meta).
+      // Runs even without a saved config so the UI can show the active
+      // provider (Kapso vs direct Meta) from the start.
+      try {
+        const res = await fetch('/api/whatsapp/config', { method: 'GET' });
+        const payload = await res.json();
 
-          if (payload.connected) {
-            setConnectionStatus('connected');
-            setResetReason(null);
-            setStatusMessage('');
-          } else {
-            setConnectionStatus('disconnected');
-            setResetReason(payload.needs_reset ? 'token_corrupted' : payload.reason === 'meta_api_error' ? 'meta_api_error' : null);
-            setStatusMessage(payload.message || '');
-          }
-        } catch (err) {
-          console.error('Health check failed:', err);
-          setConnectionStatus('disconnected');
+        if (payload.provider) {
+          setProvider(payload.provider === 'kapso' ? 'kapso' : 'meta');
         }
-      } else {
+
+        if (data && payload.connected) {
+          setConnectionStatus('connected');
+          setResetReason(null);
+          setStatusMessage('');
+        } else {
+          setConnectionStatus('disconnected');
+          setResetReason(
+            data && payload.needs_reset
+              ? 'token_corrupted'
+              : data && payload.reason === 'meta_api_error'
+                ? 'meta_api_error'
+                : null,
+          );
+          setStatusMessage(data ? payload.message || '' : '');
+        }
+      } catch (err) {
+        console.error('Health check failed:', err);
         setConnectionStatus('disconnected');
-        setResetReason(null);
-        setStatusMessage('');
       }
     } catch (err) {
       console.error('fetchConfig error:', err);
@@ -450,6 +459,27 @@ export function WhatsAppConfig() {
                 t('notConnectedDesc')}
           </AlertDescription>
         </Alert>
+
+        {/* Kapso proxy mode banner — provider-specific guidance. Shown
+            whenever the instance talks to Kapso, so users don't follow
+            the Meta-only registration/PIN steps that don't apply. */}
+        {provider === 'kapso' && (
+          <Alert className="bg-sky-950/40 border-sky-600/40">
+            <div className="flex items-start gap-3">
+              <Zap className="size-5 text-sky-400 mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <AlertTitle className="text-sky-200 mb-1">
+                  {t('kapsoModeTitle')}
+                </AlertTitle>
+                <AlertDescription className="text-sky-100/80 text-sm">
+                  <span
+                    dangerouslySetInnerHTML={{ __html: t('kapsoModeDesc') }}
+                  />
+                </AlertDescription>
+              </div>
+            </div>
+          </Alert>
+        )}
 
         {/* Registration Status — the "is it actually live?" check.
             Credentials being valid is necessary but not sufficient;

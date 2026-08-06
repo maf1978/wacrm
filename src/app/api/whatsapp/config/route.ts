@@ -5,6 +5,7 @@ import {
   registerPhoneNumber,
   subscribeWabaToApp,
   verifyPhoneNumber,
+  isKapsoMode,
 } from '@/lib/whatsapp/meta-api'
 import { encrypt, decrypt } from '@/lib/whatsapp/encryption'
 
@@ -63,6 +64,8 @@ function supabaseAdmin() {
 export async function GET() {
   try {
     const supabase = await createClient()
+    // Lets the UI show provider-specific guidance (Kapso vs Meta direct).
+    const provider = isKapsoMode() ? 'kapso' : 'meta'
 
     const {
       data: { user },
@@ -79,6 +82,7 @@ export async function GET() {
         {
           connected: false,
           reason: 'no_account',
+          provider,
           message: 'Your profile is not linked to an account.',
         },
         { status: 200 },
@@ -104,6 +108,7 @@ export async function GET() {
         {
           connected: false,
           reason: 'no_config',
+          provider,
           message: 'No WhatsApp configuration saved yet. Fill in the form and click Save Configuration.',
         },
         { status: 200 }
@@ -121,6 +126,7 @@ export async function GET() {
         {
           connected: false,
           reason: 'token_corrupted',
+          provider,
           needs_reset: true,
           message:
             'The stored access token cannot be decrypted with the current ENCRYPTION_KEY. This usually means the key changed, or it differs between environments (local vs Hostinger vs Vercel). Click "Reset Configuration" below, then re-save.',
@@ -135,7 +141,7 @@ export async function GET() {
         phoneNumberId: config.phone_number_id,
         accessToken,
       })
-      return NextResponse.json({ connected: true, phone_info: phoneInfo })
+      return NextResponse.json({ connected: true, provider, phone_info: phoneInfo })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown Meta API error'
       console.error('[whatsapp/config GET] Meta API verification failed:', message)
@@ -143,6 +149,7 @@ export async function GET() {
         {
           connected: false,
           reason: 'meta_api_error',
+          provider,
           message: `Meta API rejected the credentials: ${message}`,
         },
         { status: 200 }

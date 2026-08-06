@@ -18,6 +18,42 @@ const META_API_BASE =
   process.env.WHATSAPP_API_BASE_URL ||
   `https://graph.facebook.com/${META_API_VERSION}`
 
+/**
+ * True when we're talking to a BSP meta proxy (Kapso) instead of Meta's
+ * Cloud API directly.
+ *
+ * Two ways to be in Kapso mode:
+ *   1. WHATSAPP_API_KEY is set — Kapso scopes every call by the project's
+ *      `X-API-Key` rather than a per-credentials bearer token.
+ *   2. WHATSAPP_API_BASE_URL points at Kapso (`https://api.kapso.ai/...`).
+ *
+ * Kapso's proxy mirrors the WhatsApp *messaging* surface of Meta's Cloud
+ * API but is NOT a full Meta Graph proxy: phone-metadata GETs, WABA
+ * subscribing, and resumable uploads behave differently or not at all.
+ * The guards below short-circuit those with Kapso-appropriate behaviour.
+ */
+export function isKapsoMode(): boolean {
+  const apiKey = process.env.WHATSAPP_API_KEY
+  if (apiKey && apiKey.length > 0) return true
+  return (process.env.WHATSAPP_API_BASE_URL ?? '').includes('kapso')
+}
+
+/**
+ * Pick the auth headers for an outbound call.
+ *
+ * Standard Meta route: `Authorization: Bearer <user-held token>`. Kapso
+ * proxy route with an env API key: `X-API-Key: <kapso key>` (the per-row
+ * token is scoped to the Kaps project key instead). Falls back to Bearer
+ * when Kapso is reached without a keyed env (token stored with Kaps).
+ */
+function authHeaders(accessToken: string): Record<string, string> {
+  if (isKapsoMode()) {
+    const apiKey = process.env.WHATSAPP_API_KEY
+    if (apiKey) return { 'X-API-Key': apiKey }
+  }
+  return { Authorization: `Bearer ${accessToken}` }
+}
+
 export interface MetaSendResult {
   messageId: string
 }
@@ -60,10 +96,17 @@ export interface VerifyPhoneNumberArgs {
 export async function verifyPhoneNumber(
   args: VerifyPhoneNumberArgs
 ): Promise<MetaPhoneInfo> {
-  const { phoneNumberId, accessToken } = args
+  const { phoneNumberId } = args
+  // The Kapso proxy does not mirror Meta's phone-metadata GET endpoint.
+  // The number is already validated and provisioned by Kapso when it was
+  // connected in their dashboard, so return minimal info without a call.
+  if (isKapsoMode()) {
+    return { id: phoneNumberId, display_phone_number: '' }
+  }
+  const { accessToken } = args
   const url = `${META_API_BASE}/${phoneNumberId}?fields=id,display_phone_number,verified_name,quality_rating`
   const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: authHeaders(accessToken),
   })
   if (!response.ok) {
     await throwMetaError(response, `Meta API error: ${response.status}`)
@@ -129,13 +172,20 @@ export interface RegisterPhoneNumberResult {
 export async function registerPhoneNumber(
   args: RegisterPhoneNumberArgs
 ): Promise<RegisterPhoneNumberResult> {
-  const { phoneNumberId, accessToken, pin } = args
+  const { phoneNumberId } = args
+  // In Kapso mode the webhook subscription is wired in the Kapso
+  // dashboard, not via Meta's /register + 2FA PIN flow. Report the number
+  // as already registered so the connection is treated as live.
+  if (isKapsoMode()) {
+    return { success: true, alreadyRegistered: true }
+  }
+  const { accessToken, pin } = args
   const url = `${META_API_BASE}/${phoneNumberId}/register`
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      ...authHeaders(accessToken),
     },
     body: JSON.stringify({ messaging_product: 'whatsapp', pin }),
   })
@@ -173,11 +223,15 @@ export interface SubscribeWabaToAppArgs {
 export async function subscribeWabaToApp(
   args: SubscribeWabaToAppArgs
 ): Promise<void> {
-  const { wabaId, accessToken } = args
+  const { wabaId } = args
+  // Kapso mode: webhooks are delivered by Kapso's platform per phone
+  // number; there is no Meta WABA-level subscription to create.
+  if (isKapsoMode()) return
+  const { accessToken } = args
   const url = `${META_API_BASE}/${wabaId}/subscribed_apps`
   const response = await fetch(url, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: authHeaders(accessToken),
   })
   if (!response.ok) {
     await throwMetaError(response, `Meta API error: ${response.status}`)
@@ -205,10 +259,25 @@ export interface SubscribedApp {
 export async function getSubscribedApps(
   args: GetSubscribedAppsArgs
 ): Promise<SubscribedApp[]> {
-  const { wabaId, accessToken } = args
+  const { wabaId } = args
+  // Kapso mode has no WABA subscription concept — the proxy delivers
+  // webhooks for any number wired in the Kapso dashboard. Report a single
+  // "our app" entry so the verify-registration diagnostic passes instead
+  // of showing a misleading empty list.
+  if (isKapsoMode()) {
+    return [
+      {
+        whatsapp_business_api_data: {
+          id: 'kapso-proxy',
+          name: 'Kapso proxy',
+        },
+      },
+    ]
+  }
+  const { accessToken } = args
   const url = `${META_API_BASE}/${wabaId}/subscribed_apps`
   const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: authHeaders(accessToken),
   })
   if (!response.ok) {
     await throwMetaError(response, `Meta API error: ${response.status}`)
@@ -254,7 +323,7 @@ export async function sendTextMessage(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      ...authHeaders(accessToken),
     },
     body: JSON.stringify(body),
   })
@@ -320,7 +389,7 @@ export async function sendMediaMessage(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      ...authHeaders(accessToken),
     },
     body: JSON.stringify(body),
   })
@@ -438,7 +507,7 @@ export async function sendTemplateMessage(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      ...authHeaders(accessToken),
     },
     body: JSON.stringify(body),
   })
@@ -483,6 +552,15 @@ export interface UploadResumableMediaArgs {
 export async function uploadResumableMedia(
   args: UploadResumableMediaArgs,
 ): Promise<{ handle: string }> {
+  // Resumable Upload is a Meta app-scoped flow (OAuth scheme, app_id).
+  // Kapso does not mirror it — media-header templates are managed in the
+  // Kapso dashboard. Fail loud and clear instead of sending a call that
+  // the proxy will reject with a confusing error.
+  if (isKapsoMode()) {
+    throw new Error(
+      'Media-header templates are not supported through the Kapso proxy. Create and manage them in the Kapso dashboard.',
+    )
+  }
   const { appId, accessToken, fileName, mimeType, bytes } = args
 
   // Step 1 — open an upload session.
@@ -566,7 +644,7 @@ export async function submitMessageTemplate(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      ...authHeaders(accessToken),
     },
     body: JSON.stringify(payload),
   })
@@ -618,7 +696,7 @@ export async function editMessageTemplate(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      ...authHeaders(accessToken),
     },
     body: JSON.stringify(body),
   })
@@ -655,7 +733,7 @@ export async function deleteMessageTemplate(
   const url = `${META_API_BASE}/${wabaId}/message_templates?${params.toString()}`
   const response = await fetch(url, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: authHeaders(accessToken),
   })
   // Treat a 404 as a no-op — the template is already gone on Meta's
   // side, and we still want the local row removed.
@@ -692,7 +770,7 @@ export async function sendReactionMessage(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      ...authHeaders(accessToken),
     },
     body: JSON.stringify({
       messaging_product: 'whatsapp',
@@ -828,7 +906,7 @@ export async function sendInteractiveButtons(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      ...authHeaders(accessToken),
     },
     body: JSON.stringify(body),
   })
@@ -960,7 +1038,7 @@ export async function sendInteractiveList(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      ...authHeaders(accessToken),
     },
     body: JSON.stringify(body),
   })
@@ -1003,6 +1081,8 @@ function validateInteractiveHeaderFooter(
 export interface GetMediaUrlArgs {
   mediaId: string
   accessToken: string
+  /** Required by the Kapso proxy — media lookups need phone_number_id. */
+  phoneNumberId?: string
 }
 
 /**
@@ -1012,9 +1092,22 @@ export interface GetMediaUrlArgs {
 export async function getMediaUrl(
   args: GetMediaUrlArgs
 ): Promise<{ url: string; mimeType: string }> {
-  const { mediaId, accessToken } = args
+  const { mediaId, accessToken, phoneNumberId } = args
+  if (isKapsoMode()) {
+    const params = new URLSearchParams()
+    if (phoneNumberId) params.set('phone_number_id', phoneNumberId)
+    const response = await fetch(`${META_API_BASE}/${mediaId}?${params.toString()}`, {
+      headers: authHeaders(accessToken),
+    })
+    if (!response.ok) {
+      await throwMetaError(response, `Media fetch failed: ${response.status}`)
+    }
+    const data = await response.json()
+    if (!data.url) throw new Error('Media URL not found in Kapso response')
+    return { url: data.url, mimeType: data.mime_type || 'application/octet-stream' }
+  }
   const response = await fetch(`${META_API_BASE}/${mediaId}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: authHeaders(accessToken),
   })
   if (!response.ok) {
     await throwMetaError(response, `Media fetch failed: ${response.status}`)
@@ -1038,7 +1131,7 @@ export async function downloadMedia(
 ): Promise<{ buffer: Buffer; contentType: string }> {
   const { downloadUrl, accessToken } = args
   const response = await fetch(downloadUrl, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: authHeaders(accessToken),
   })
   if (!response.ok) {
     throw new Error(`Media download failed: ${response.status}`)

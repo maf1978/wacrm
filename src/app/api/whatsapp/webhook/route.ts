@@ -318,7 +318,10 @@ async function processWebhook(body: { entry?: WhatsAppWebhookEntry[] }) {
           // inserts that need it for NOT NULL FK compliance. Always
           // the admin who saved the WhatsApp config.
           config.user_id,
-          decryptedAccessToken
+          decryptedAccessToken,
+          // Needed to resolve inbound media through the Kapso proxy,
+          // which requires phone_number_id on every media lookup.
+          config.phone_number_id,
         );
       }
     }
@@ -587,7 +590,8 @@ async function processMessage(
   // (contacts, conversations). Always the admin who saved the
   // WhatsApp config; the choice is arbitrary post-017 but stable.
   configOwnerUserId: string,
-  accessToken: string
+  accessToken: string,
+  phoneNumberId: string
 ) {
   const senderPhone = normalizePhone(message.from);
   const contactName = contact.profile.name;
@@ -637,7 +641,7 @@ async function processMessage(
 
   // Parse message content based on type
   const { contentText, mediaUrl, mediaType, interactiveReplyId } =
-    await parseMessageContent(message, accessToken);
+    await parseMessageContent(message, accessToken, phoneNumberId);
 
   // Resolve swipe-reply context if present. A missing parent is fine —
   // we just store NULL and the UI renders the message without a quote.
@@ -898,7 +902,8 @@ async function processMessage(
 
 async function parseMessageContent(
   message: WhatsAppMessage,
-  accessToken: string
+  accessToken: string,
+  phoneNumberId: string
 ): Promise<{
   contentText: string | null;
   mediaUrl: string | null;
@@ -918,8 +923,10 @@ async function parseMessageContent(
   // why images showed up as empty bubbles in the inbox.
   const verifyAndBuildUrl = async (mediaId: string): Promise<string | null> => {
     try {
-      await getMediaUrl({ mediaId, accessToken });
-      return `/api/whatsapp/media/${mediaId}`;
+      await getMediaUrl({ mediaId, accessToken, phoneNumberId });
+      // Pass phone_number_id along so the /api/whatsapp/media proxy can
+      // forward it to the Kapso proxy (which requires it).
+      return `/api/whatsapp/media/${mediaId}?phone_number_id=${phoneNumberId}`;
     } catch (error) {
       console.error(
         `Failed to verify media ${mediaId} with Meta:`,
