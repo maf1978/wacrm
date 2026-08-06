@@ -472,9 +472,7 @@ export function WhatsAppConfig() {
                   {t('kapsoModeTitle')}
                 </AlertTitle>
                 <AlertDescription className="text-sky-100/80 text-sm">
-                  <span
-                    dangerouslySetInnerHTML={{ __html: t('kapsoModeDesc') }}
-                  />
+                  {t('kapsoModeDesc')}
                 </AlertDescription>
               </div>
             </div>

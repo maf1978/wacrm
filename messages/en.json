@@ -1517,7 +1517,7 @@
       "connectedDesc": "Your access token authenticates with Meta. See Registration status below for whether webhooks are actually wired.",
       "notConnectedDesc": "Configure your Meta API credentials below to connect your WhatsApp Business account.",
       "kapsoModeTitle": "Kapso proxy mode detected",
-      "kapsoModeDesc": "This instance sends WhatsApp traffic through <strong class=\"text-foreground\">Kapso</strong>. Connect the number in the Kapso dashboard, point its webhook (type <strong class=\"text-foreground\">meta</strong>) at the Webhook Callback URL below, and use your Kapso <strong class=\"text-foreground\">API key</strong> as the access token. Meta's PIN / registration steps below do not apply.",
+      "kapsoModeDesc": "This instance sends WhatsApp traffic through Kapso. Connect the number in the Kapso dashboard, point its webhook (type \u201Cmeta\u201D) at the Webhook Callback URL below, and use your Kapso API key as the access token. Meta's PIN / registration steps below do not apply.",
       "registered": "Registered — Meta will deliver events to the Application",
       "notRegistered": "Not registered — Meta will not deliver events",
       "verifyWithMeta": "Verify with Meta",
