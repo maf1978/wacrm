@@ -50,18 +50,23 @@ export function FAQChatWidget({
   const FAQS: FaqEntry[] = [
     {
       q: '¿Cómo agendo una cita?',
-      a: 'Escríbenos por WhatsApp con tu nombre y el motivo de tu visita y te ofrecemos los horarios disponibles. También confirmamos tu cita con recordatorio automático el día anterior y dos horas antes.',
-      keywords: ['cita', 'agendar', 'agenda', 'reservar', 'horario disponible', 'turno', 'cómo saco'],
+      a: '¡Claro! Hacemos citas por WhatsApp: dime tu nombre y el motivo de tu visita y, si el horario está disponible, reservamos tu cita y te confirmamos con recordatorio automático el día anterior y dos horas antes.',
+      keywords: ['cita', 'agendar', 'agenda', 'reservar', 'turno', 'cómo saco', 'disponible', 'disponibilidad'],
     },
     {
       q: '¿Cuál es el horario de atención?',
-      a: 'Atendemos de 9:00 AM a 7:00 PM. Escríbenos por WhatsApp y te confirmamos disponibilidad para hoy o los próximos días.',
-      keywords: ['horario', 'hora', 'abierto', 'atienden', 'cuándo', 'días'],
+      a: 'Atendemos de 9:00 AM a 7:00 PM. Escríbenos por WhatsApp y te confirmamos la disponibilidad para hoy o los próximos días.',
+      keywords: ['horario', 'hora', 'abierto', 'atienden', 'cuándo', 'días', 'trabajan'],
     },
     {
-      q: '¿Aceptan seguros dentales?',
-      a: 'Envía los datos de tu póliza por WhatsApp y verificamos tu cobertura antes de la cita, sin compromiso.',
-      keywords: ['seguro', 'seguros', 'póliza', 'poliza', 'cobertura', 'pago', 'pagar', 'tarjeta'],
+      q: '¿Qué servicios ofrecen?',
+      a: 'Ofrecemos 4 servicios principales: 1) Exámenes dentales, 2) Limpieza dental, 3) Tratamiento de caries y 4) Empastes y reparación. También realizamos endodoncia y odontología cosmética.',
+      keywords: ['servicio', 'servicios', 'tratamiento', 'tratamientos', 'qué hacen', 'ofrecen'],
+    },
+    {
+      q: '¿Aceptan seguros? ¿Atienden sin seguro?',
+      a: 'Atendemos sin seguro. Y si tienes seguro, aceptamos la mayoría de los seguros dentales, pero hay que chequear qué beneficios tienes para la parte dental: envíanos los datos de tu póliza y verificamos tu cobertura antes de la cita.',
+      keywords: ['seguro', 'seguros', 'póliza', 'poliza', 'cobertura', 'beneficio', 'beneficios', 'pago', 'pagar', 'tarjeta', 'efectivo'],
     },
     {
       q: '¿Qué hago ante una urgencia dental?',
