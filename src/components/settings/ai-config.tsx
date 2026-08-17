@@ -41,11 +41,19 @@ const HANDOFF_QUEUE = '__queue__';
 const PROVIDER_LABEL: Record<AiProvider, string> = {
   openai: 'OpenAI',
   anthropic: 'Anthropic (Claude)',
+  deepseek: 'DeepSeek',
 };
 
 const KEY_PLACEHOLDER: Record<AiProvider, string> = {
   openai: 'sk-...',
   anthropic: 'sk-ant-...',
+  deepseek: 'sk-...',
+};
+
+/** Suggested model IDs per provider, shown under the model input. */
+const MODEL_HINT: Partial<Record<AiProvider, string>> = {
+  deepseek:
+    'deepseek-chat (último modelo de chat) · deepseek-reasoner (razonamiento)',
 };
 
 export function AiConfig() {
@@ -129,8 +137,7 @@ export function AiConfig() {
   const handleProviderChange = (next: AiProvider) => {
     setProvider(next);
     const isDefaultModel =
-      model === AI_PROVIDER_DEFAULT_MODEL.openai ||
-      model === AI_PROVIDER_DEFAULT_MODEL.anthropic ||
+      Object.values(AI_PROVIDER_DEFAULT_MODEL).includes(model) ||
       model.trim() === '';
     if (isDefaultModel) setModel(AI_PROVIDER_DEFAULT_MODEL[next]);
   };
@@ -281,6 +288,9 @@ export function AiConfig() {
                     <SelectItem value="anthropic">
                       {PROVIDER_LABEL.anthropic}
                     </SelectItem>
+                    <SelectItem value="deepseek">
+                      {PROVIDER_LABEL.deepseek}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -294,6 +304,11 @@ export function AiConfig() {
                   placeholder={AI_PROVIDER_DEFAULT_MODEL[provider]}
                   disabled={disabled}
                 />
+                {MODEL_HINT[provider] && (
+                  <p className="text-muted-foreground text-xs">
+                    {MODEL_HINT[provider]}
+                  </p>
+                )}
               </div>
             </div>
 

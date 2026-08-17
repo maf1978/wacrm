@@ -128,6 +128,35 @@ describe('generateReply — OpenAI', () => {
   })
 })
 
+describe('generateReply — DeepSeek', () => {
+  it('calls the OpenAI-compatible endpoint and returns the reply', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      okResponse({
+        choices: [{ message: { content: 'Claro, te ayudo.' } }],
+        usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await generateReply({
+      config: config({ provider: 'deepseek', apiKey: 'sk-deepseek-1' }),
+      systemPrompt: 'sys',
+      messages: [{ role: 'user', content: 'Hola' }],
+    })
+
+    expect(res).toEqual({
+      text: 'Claro, te ayudo.',
+      handoff: false,
+      usage: { promptTokens: 10, completionTokens: 5, totalTokens: 15 },
+    })
+    const [url, opts] = fetchMock.mock.calls[0]
+    expect(url).toContain('api.deepseek.com')
+    expect(opts.headers.Authorization).toBe('Bearer sk-deepseek-1')
+    // DeepSeek's compatibility API reads `max_tokens`.
+    expect(opts.body).toContain('"max_tokens"')
+  })
+})
+
 describe('generateReply — Anthropic', () => {
   it('calls the messages endpoint with the version header and parses text blocks', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
