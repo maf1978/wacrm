@@ -855,6 +855,25 @@ async function processMessage(
     automationTriggers.unshift('new_contact_created');
   if (isFirstInboundMessage)
     automationTriggers.unshift('first_inbound_message');
+  // Today's date in the account's scheduling timezone, exposed to
+  // automations as {{vars.date}} so steps like offer_appointment_slots
+  // can offer "today" without a fixed date. Defaults to the clinic's
+  // timezone when the account row has none.
+  const [{ data: account }] = await Promise.all([
+    supabaseAdmin()
+      .from('accounts')
+      .select('scheduling_timezone')
+      .eq('id', accountId)
+      .maybeSingle(),
+  ]);
+  const timezone = account?.scheduling_timezone || 'America/New_York';
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+
   for (const triggerType of automationTriggers) {
     runAutomationsForTrigger({
       accountId,
@@ -866,6 +885,7 @@ async function processMessage(
         // Only set on interactive taps; drives the interactive_reply
         // trigger's exact-id match.
         interactive_reply_id: interactiveReplyId ?? undefined,
+        vars: { date: today },
       },
     }).catch((err) => console.error('[automations] dispatch failed:', err));
   }

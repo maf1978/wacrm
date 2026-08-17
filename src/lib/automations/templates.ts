@@ -10,6 +10,7 @@ export type TemplateSlug =
   | 'out_of_office'
   | 'lead_qualifier'
   | 'follow_up_reminder'
+  | 'book_appointment'
 
 export interface TemplateStepSeed {
   step_type: AutomationStepType
@@ -121,6 +122,27 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
         step_config: {
           text:
             "Just circling back — did you have any other questions for us? Happy to help!",
+        },
+      },
+    ],
+  },
+  book_appointment: {
+    slug: 'book_appointment',
+    name: 'Reserva de cita',
+    description:
+      'Cuando el paciente escribe "cita", "reservar" o "agendar", le envía los horarios disponibles del día ({{vars.date}}) para que elija y reserve. Requiere completar el Service ID del tratamiento y tener el personal con agenda.',
+    trigger_type: 'keyword_match',
+    trigger_config: {
+      keywords: ['cita', 'reservar', 'agendar', 'turno', 'horario'],
+      match_type: 'contains',
+    },
+    steps: [
+      {
+        step_type: 'offer_appointment_slots',
+        step_config: {
+          service_id: '',
+          date: '{{vars.date}}',
+          limit: 10,
         },
       },
     ],
