@@ -53,7 +53,7 @@ const KEY_PLACEHOLDER: Record<AiProvider, string> = {
 /** Suggested model IDs per provider, shown under the model input. */
 const MODEL_HINT: Partial<Record<AiProvider, string>> = {
   deepseek:
-    'deepseek-chat (último modelo de chat) · deepseek-reasoner (razonamiento)',
+    'deepseek-v4-flash (rápido) · deepseek-v4-pro (máxima calidad)',
 };
 
 export function AiConfig() {
