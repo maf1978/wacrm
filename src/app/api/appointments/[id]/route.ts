@@ -91,6 +91,25 @@ export async function PATCH(
     }
     if (body.staff_profile_id) update.staff_profile_id = body.staff_profile_id;
     if ('notes' in body) update.notes = body.notes || null;
+    if ('room_id' in body) {
+      if (body.room_id) {
+        const { data: room } = await admin
+          .from('clinic_rooms')
+          .select('id')
+          .eq('id', body.room_id)
+          .eq('account_id', ctx.accountId)
+          .eq('is_active', true)
+          .maybeSingle();
+        if (!room)
+          return NextResponse.json(
+            { error: 'Room not found or inactive' },
+            { status: 400 }
+          );
+        update.room_id = room.id;
+      } else {
+        update.room_id = null;
+      }
+    }
 
     const { data: appointment, error } = await admin
       .from('appointments')
@@ -99,7 +118,7 @@ export async function PATCH(
       .eq('account_id', ctx.accountId)
       .eq('revision', current.revision)
       .select(
-        '*, contact:contacts(id,name,phone), service:appointment_services(*), staff:staff_scheduling_profiles(*)'
+        '*, contact:contacts(id,name,phone), service:appointment_services(*), staff:staff_scheduling_profiles(*), room:clinic_rooms(*)'
       )
       .maybeSingle();
     if (error) {

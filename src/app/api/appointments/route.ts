@@ -18,7 +18,8 @@ const select = `
   *,
   contact:contacts(id, name, phone, email),
   service:appointment_services(*),
-  staff:staff_scheduling_profiles(id, user_id, timezone, is_bookable)
+  staff:staff_scheduling_profiles(id, user_id, timezone, is_bookable),
+  room:clinic_rooms(*)
 `;
 
 export async function GET(request: Request) {
@@ -42,10 +43,12 @@ export async function GET(request: Request) {
     const contact = url.searchParams.get('contact_id');
     const staff = url.searchParams.get('staff_profile_id');
     const service = url.searchParams.get('service_id');
+    const room = url.searchParams.get('room_id');
     const status = url.searchParams.get('status');
     if (contact) query = query.eq('contact_id', contact);
     if (staff) query = query.eq('staff_profile_id', staff);
     if (service) query = query.eq('service_id', service);
+    if (room) query = query.eq('room_id', room);
     if (status) query = query.eq('status', status);
     const { data, error } = await query;
     if (error)
@@ -78,8 +81,10 @@ export async function POST(request: Request) {
     if (!isValidTimeZone(timezone)) {
       return NextResponse.json({ error: 'Invalid timezone' }, { status: 400 });
     }
+    // Normalize empty-string room from the form to an actual NULL.
+    const roomId = body.room_id || null;
     const admin = supabaseAdmin();
-    const [{ data: service }, { data: contact }, { data: staff }] =
+    const [{ data: service }, { data: contact }, { data: staff }, { data: room }] =
       await Promise.all([
         admin
           .from('appointment_services')
@@ -101,10 +106,25 @@ export async function POST(request: Request) {
           .eq('account_id', ctx.accountId)
           .eq('is_bookable', true)
           .maybeSingle(),
+        roomId
+          ? admin
+              .from('clinic_rooms')
+              .select('id')
+              .eq('id', roomId)
+              .eq('account_id', ctx.accountId)
+              .eq('is_active', true)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
       ]);
     if (!service || !contact || !staff) {
       return NextResponse.json(
         { error: 'Contact, active service, or bookable staff not found' },
+        { status: 400 }
+      );
+    }
+    if (roomId && !room) {
+      return NextResponse.json(
+        { error: 'Room not found or inactive' },
         { status: 400 }
       );
     }
@@ -121,6 +141,7 @@ export async function POST(request: Request) {
         contact_id: body.contact_id,
         service_id: body.service_id,
         staff_profile_id: body.staff_profile_id,
+        room_id: roomId,
         starts_at: range.startsAt,
         ends_at: range.endsAt,
         timezone,

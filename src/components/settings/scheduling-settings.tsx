@@ -4,14 +4,17 @@ import { useEffect, useState } from 'react';
 import {
   BellRing,
   CalendarClock,
+  DoorOpen,
   Loader2,
   Plus,
+  Trash2,
   UsersRound,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type {
   AppointmentReminderRule,
   AppointmentService,
+  ClinicRoom,
   StaffSchedulingProfile,
 } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -28,39 +31,57 @@ export function SchedulingSettings() {
   const canEdit = useCan('edit-settings');
   const [services, setServices] = useState<AppointmentService[]>([]);
   const [staff, setStaff] = useState<StaffSchedulingProfile[]>([]);
+  const [rooms, setRooms] = useState<ClinicRoom[]>([]);
   const [rules, setRules] = useState<AppointmentReminderRule[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [serviceName, setServiceName] = useState('');
   const [duration, setDuration] = useState('60');
+  const [roomName, setRoomName] = useState('');
+  const [roomColor, setRoomColor] = useState('#0ea5e9');
   const [timezone, setTimezone] = useState(
     Intl.DateTimeFormat().resolvedOptions().timeZone
   );
 
   async function load() {
     setLoading(true);
-    const [serviceRes, staffRes, reminderRes, membersRes, settingsRes] =
-      await Promise.all([
-        fetch('/api/appointment-services'),
-        fetch('/api/appointment-staff'),
-        fetch('/api/appointment-reminders'),
-        fetch('/api/account/members'),
-        fetch('/api/appointment-settings'),
-      ]);
-    const [serviceJson, staffJson, reminderJson, membersJson, settingsJson] =
-      await Promise.all([
-        serviceRes.json(),
-        staffRes.json(),
-        reminderRes.json(),
-        membersRes.json(),
-        settingsRes.json(),
-      ]);
+    const [
+      serviceRes,
+      staffRes,
+      reminderRes,
+      membersRes,
+      settingsRes,
+      roomsRes,
+    ] = await Promise.all([
+      fetch('/api/appointment-services'),
+      fetch('/api/appointment-staff'),
+      fetch('/api/appointment-reminders'),
+      fetch('/api/account/members'),
+      fetch('/api/appointment-settings'),
+      fetch('/api/clinic-rooms'),
+    ]);
+    const [
+      serviceJson,
+      staffJson,
+      reminderJson,
+      membersJson,
+      settingsJson,
+      roomsJson,
+    ] = await Promise.all([
+      serviceRes.json(),
+      staffRes.json(),
+      reminderRes.json(),
+      membersRes.json(),
+      settingsRes.json(),
+      roomsRes.json(),
+    ]);
     setServices(serviceJson.services ?? []);
     setStaff(staffJson.staff ?? []);
     setRules(reminderJson.rules ?? []);
     setTemplates(reminderJson.templates ?? []);
     setMembers(membersJson.members ?? []);
+    setRooms(roomsJson.rooms ?? []);
     setTimezone(
       settingsJson.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
     );
@@ -93,6 +114,51 @@ export function SchedulingSettings() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ is_active: !service.is_active }),
     });
+    await load();
+  }
+
+  async function addRoom() {
+    if (!roomName.trim()) return;
+    const response = await fetch('/api/clinic-rooms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: roomName.trim(), color: roomColor }),
+    });
+    const body = await response.json();
+    if (!response.ok) return toast.error(body.error);
+    setRoomName('');
+    toast.success('Room added');
+    await load();
+  }
+
+  async function updateRoom(
+    room: ClinicRoom,
+    patch: { name?: string; color?: string; is_active?: boolean }
+  ) {
+    const response = await fetch(`/api/clinic-rooms/${room.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+    const body = await response.json();
+    if (!response.ok) return toast.error(body.error);
+    await load();
+  }
+
+  async function deleteRoom(room: ClinicRoom) {
+    if (
+      !window.confirm(
+        `Delete "${room.name}"? Appointments in it become unassigned.`
+      )
+    ) {
+      return;
+    }
+    const response = await fetch(`/api/clinic-rooms/${room.id}`, {
+      method: 'DELETE',
+    });
+    const body = await response.json();
+    if (!response.ok) return toast.error(body.error);
+    toast.success('Room deleted');
     await load();
   }
 
@@ -174,6 +240,91 @@ export function SchedulingSettings() {
           </Button>
         </div>
       </Card>
+      <Card className="p-5">
+        <Heading
+          icon={DoorOpen}
+          title="Rooms"
+          description="Your operatories. The Rooms board in Appointments shows one column per active room — add, rename, recolor, or deactivate them here."
+        />
+        <div className="mt-4 grid gap-2 sm:grid-cols-[auto_1fr_auto]">
+          <input
+            type="color"
+            value={roomColor}
+            onChange={(event) => setRoomColor(event.target.value)}
+            disabled={!canEdit}
+            className="border-border bg-background h-9 w-12 cursor-pointer rounded-lg border p-1"
+            aria-label="New room color"
+          />
+          <Input
+            value={roomName}
+            onChange={(event) => setRoomName(event.target.value)}
+            placeholder="Room 4…"
+            disabled={!canEdit}
+          />
+          <Button onClick={addRoom} disabled={!canEdit || !roomName.trim()}>
+            <Plus className="size-4" />
+            Add
+          </Button>
+        </div>
+        <div className="divide-border border-border mt-4 divide-y rounded-lg border">
+          {rooms.map((room) => (
+            <div
+              key={room.id}
+              className="flex flex-wrap items-center gap-3 px-3 py-2.5"
+            >
+              <input
+                type="color"
+                value={room.color}
+                onChange={(event) =>
+                  void updateRoom(room, { color: event.target.value })
+                }
+                disabled={!canEdit}
+                className="border-border bg-background h-7 w-9 cursor-pointer rounded border p-0.5"
+                aria-label={`${room.name} color`}
+              />
+              <Input
+                key={room.id}
+                defaultValue={room.name}
+                onBlur={(event) => {
+                  const name = event.target.value.trim();
+                  if (name && name !== room.name) {
+                    void updateRoom(room, { name });
+                  } else {
+                    event.target.value = room.name;
+                  }
+                }}
+                disabled={!canEdit}
+                className="h-8 min-w-32 flex-1"
+              />
+              <span className="text-muted-foreground flex items-center gap-2 text-xs">
+                <Switch
+                  checked={room.is_active}
+                  onCheckedChange={(checked) =>
+                    void updateRoom(room, { is_active: checked })
+                  }
+                  disabled={!canEdit}
+                />
+                Active
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => void deleteRoom(room)}
+                disabled={!canEdit}
+                aria-label={`Delete ${room.name}`}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
+          ))}
+          {!rooms.length && (
+            <p className="text-muted-foreground p-4 text-sm">
+              No rooms yet.
+            </p>
+          )}
+        </div>
+      </Card>
+
       <Card className="p-5">
         <Heading
           icon={CalendarClock}

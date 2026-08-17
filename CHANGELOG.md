@@ -9,6 +9,36 @@ Versions follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0, `MINOR` bumps cover new modules; `PATCH` bumps cover bug fixes
 and polish.
 
+## [0.9.0] — 2026-08-07
+
+Adds a **rooms occupancy board** for dental/clinical practices: the
+appointments calendar now shows a per-room day timeline so staff can
+see at a glance which patient is in which operatory.
+
+> **Migration required:** apply `supabase/migrations/040_clinic_rooms.sql`
+> (new `clinic_rooms` table, `appointments.room_id`, and a DB room
+> double-booking guard) and `supabase/migrations/041_seed_dental_clinic.sql`
+> (default dental services + starter clinic FAQs for the AI knowledge
+> base). Existing accounts are backfilled automatically; new accounts
+> are seeded by triggers.
+
+### Added
+
+- **Rooms board (new default Appointments view).** A single-day
+  timeline with one column per room. Each appointment renders as a
+  positioned block (time, patient, treatment); a red "now" line marks
+  the current time on today's board, and unassigned appointments
+  (WhatsApp self-bookings) collect in an "Unassigned" column.
+- **Room-aware scheduling.** New appointments can be assigned to a
+  room; appointments can be moved between rooms (or unassigned) from
+  the detail dialog; the agenda view and calendar filters show rooms.
+- **Room management.** Settings → Scheduling now manages operatories —
+  add, rename, recolor, deactivate, or delete rooms.
+- **Dental starter content.** Default treatments (consulta, limpieza,
+  empaste, extracción, endodoncia, blanqueamiento, corona/puente,
+  revisión) and clinic FAQs (horarios, agendar, cuidados, pagos,
+  urgencias) are seeded for new and existing accounts.
+
 ## [0.8.1] — 2026-07-10
 
 Fixes inbound chats fragmenting into multiple threads for the same
