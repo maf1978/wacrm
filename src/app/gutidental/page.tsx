@@ -12,19 +12,28 @@ import {
   Syringe,
 } from 'lucide-react';
 import styles from './gutidental.module.css';
+import { FAQChatWidget } from './faq-widget';
 
 // ============================================================
 // GutiDental — business landing page (separate from the WACRM
 // SaaS landing at `/`). Route: /gutidental
 //
-// ⚠️ Replace WHATSAPP_NUMBER with the clinic's real WhatsApp
-// number (country code + number, digits only) before going live.
+// ⚠️ WhatsApp: still on placeholder. Replace WHATSAPP_NUMBER with
+// the clinic's real number (country code + number, digits only)
+// when ready — the CTA buttons and the chat widget's handoff
+// button activate automatically the moment a real number is set.
 // ============================================================
 
 const WHATSAPP_NUMBER = '1XXXXXXXXXX';
+const WHATSAPP_ENABLED = WHATSAPP_NUMBER !== '1XXXXXXXXXX';
 const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
   'Hola GutiDental, quiero agendar una cita.'
 )}`;
+// Until a real number is configured, WhatsApp CTAs point at the FAQ
+// section instead of a broken wa.me link.
+const waHref = WHATSAPP_ENABLED ? WHATSAPP_LINK : '#faq';
+const waTarget = WHATSAPP_ENABLED ? '_blank' : undefined;
+const waRel = WHATSAPP_ENABLED ? 'noreferrer' : undefined;
 
 const MAPS_LINK =
   'https://www.google.com/maps/search/?api=1&query=GutiDental+Hialeah+FL';
@@ -122,7 +131,7 @@ export default function GutiDentalPage() {
             <Clock3 width={13} height={13} />
             9:00 AM – 7:00 PM
           </span>
-          <a href={WHATSAPP_LINK} target="_blank" rel="noreferrer" className={styles.btnPrimarySm}>
+          <a href={waHref} target={waTarget} rel={waRel} className={styles.btnPrimarySm}>
             <WhatsAppIcon />
             Agenda por WhatsApp
           </a>
@@ -159,7 +168,7 @@ export default function GutiDentalPage() {
           </div>
 
           <div className={styles.ctaRow}>
-            <a href={WHATSAPP_LINK} target="_blank" rel="noreferrer" className={styles.btnPrimary}>
+            <a href={waHref} target={waTarget} rel={waRel} className={styles.btnPrimary}>
               <WhatsAppIcon />
               Agenda por WhatsApp
             </a>
@@ -311,12 +320,17 @@ export default function GutiDentalPage() {
           </div>
           <p className={styles.footerLegal}>
             © {new Date().getFullYear()} GutiDental · Hialeah, FL ·{' '}
-            <a href={WHATSAPP_LINK} target="_blank" rel="noreferrer">
+            <a href={waHref} target={waTarget} rel={waRel}>
               Agenda por WhatsApp
             </a>
           </p>
         </div>
       </footer>
+
+      <FAQChatWidget
+        whatsappEnabled={WHATSAPP_ENABLED}
+        whatsappLink={WHATSAPP_LINK}
+      />
     </main>
   );
 }
