@@ -19,6 +19,11 @@
 -- `fts` column is generated and `embedding` stays NULL (lexical
 -- retrieval) until the account configures an embeddings key.
 --
+-- FAQ bodies use the DISTINCT tag `$faq$...$faq$` (not `$$...$$`)
+-- because dollar-quoted strings with the same tag do not nest: the
+-- function body is delimited by `AS $$ ... $$`, so an inner `$$` pair
+-- would terminate the body early.
+--
 -- Idempotent — safe to run multiple times.
 -- ============================================================
 
@@ -55,42 +60,42 @@ BEGIN
         (
           p_account_id,
           'Horarios de atención',
-          $$Nuestra clínica dental atiende de lunes a viernes de 9:00 a 18:00 y los sábados de 9:00 a 13:00. Estamos cerrados los domingos y días festivos. Para emergencias fuera de horario, contáctanos por WhatsApp y te indicaremos cómo proceder.$$
+          $faq$Nuestra clínica dental atiende de lunes a viernes de 9:00 a 18:00 y los sábados de 9:00 a 13:00. Estamos cerrados los domingos y días festivos. Para emergencias fuera de horario, contáctanos por WhatsApp y te indicaremos cómo proceder.$faq$
         ),
         (
           p_account_id,
           'Cómo agendar una cita',
-          $$Puedes agendar tu cita escribiéndonos por WhatsApp, llamando a la clínica o directamente desde este chat. Te ofreceremos los horarios disponibles y confirmaremos tu cita con un recordatorio automático el día anterior y dos horas antes.$$
+          $faq$Puedes agendar tu cita escribiéndonos por WhatsApp, llamando a la clínica o directamente desde este chat. Te ofreceremos los horarios disponibles y confirmaremos tu cita con un recordatorio automático el día anterior y dos horas antes.$faq$
         ),
         (
           p_account_id,
           'Antes de una limpieza dental',
-          $$No necesitas preparación especial para una limpieza dental. Te recomendamos mantener tu rutina habitual de cepillado y, si tomas anticoagulantes, avísanos antes de la cita. La limpieza dura aproximadamente 45 minutos.$$
+          $faq$No necesitas preparación especial para una limpieza dental. Te recomendamos mantener tu rutina habitual de cepillado y, si tomas anticoagulantes, avísanos antes de la cita. La limpieza dura aproximadamente 45 minutos.$faq$
         ),
         (
           p_account_id,
           'Cuidados después de una extracción',
-          $$Después de una extracción dental: mantén una gasa sobre la zona durante 30-45 minutos, evita enjuagues fuertes y bebidas calientes las primeras 24 horas, no fumes y evita hacer ejercicio intenso. Aplica hielo en la mejilla si hay inflamación y toma los analgésicos indicados. Si el sangrado continúa o tienes fiebre, contáctanos de inmediato.$$
+          $faq$Después de una extracción dental: mantén una gasa sobre la zona durante 30-45 minutos, evita enjuagues fuertes y bebidas calientes las primeras 24 horas, no fumes y evita hacer ejercicio intenso. Aplica hielo en la mejilla si hay inflamación y toma los analgésicos indicados. Si el sangrado continúa o tienes fiebre, contáctanos de inmediato.$faq$
         ),
         (
           p_account_id,
           'Medios de pago y seguros',
-          $$Aceptamos efectivo, tarjetas de débito y crédito, y transferencias. Trabajamos con la mayoría de los seguros dentales; envíanos los datos de tu póliza por WhatsApp y verificaremos tu cobertura antes de la cita. También ofrecemos planes de pago para tratamientos mayores.$$
+          $faq$Aceptamos efectivo, tarjetas de débito y crédito, y transferencias. Trabajamos con la mayoría de los seguros dentales; envíanos los datos de tu póliza por WhatsApp y verificaremos tu cobertura antes de la cita. También ofrecemos planes de pago para tratamientos mayores.$faq$
         ),
         (
           p_account_id,
           'Costo de una consulta',
-          $$El costo de la consulta general varía según el tratamiento. Escríbenos por WhatsApp con el motivo de tu visita y te daremos un presupuesto claro y sin compromiso antes de agendar. El presupuesto incluye todos los materiales y el seguimiento.$$
+          $faq$El costo de la consulta general varía según el tratamiento. Escríbenos por WhatsApp con el motivo de tu visita y te daremos un presupuesto claro y sin compromiso antes de agendar. El presupuesto incluye todos los materiales y el seguimiento.$faq$
         ),
         (
           p_account_id,
           'Urgencias dentales',
-          $$Si tienes una urgencia dental (dolor intenso, inflamación, fractura o sangrado), escríbenos por WhatsApp de inmediato con una foto o descripción del problema. Priorizamos las urgencias el mismo día dentro de nuestro horario de atención.$$
+          $faq$Si tienes una urgencia dental (dolor intenso, inflamación, fractura o sangrado), escríbenos por WhatsApp de inmediato con una foto o descripción del problema. Priorizamos las urgencias el mismo día dentro de nuestro horario de atención.$faq$
         ),
         (
           p_account_id,
           'Recomendaciones generales',
-          $$Recomendamos una revisión dental cada seis meses para detectar problemas a tiempo. Entre visitas: cepíllate al menos dos veces al día, usa hilo dental a diario y limita el consumo de azúcar. Los niños deben comenzar sus revisiones con su primer diente o antes de cumplir un año.$$
+          $faq$Recomendamos una revisión dental cada seis meses para detectar problemas a tiempo. Entre visitas: cepíllate al menos dos veces al día, usa hilo dental a diario y limita el consumo de azúcar. Los niños deben comenzar sus revisiones con su primer diente o antes de cumplir un año.$faq$
         )
       RETURNING id, account_id, content
     )
