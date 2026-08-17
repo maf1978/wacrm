@@ -104,7 +104,7 @@ export function SchedulingSettings() {
     const body = await response.json();
     if (!response.ok) return toast.error(body.error);
     setServiceName('');
-    toast.success('Service added');
+    toast.success('Servicio agregado');
     await load();
   }
 
@@ -127,7 +127,7 @@ export function SchedulingSettings() {
     const body = await response.json();
     if (!response.ok) return toast.error(body.error);
     setRoomName('');
-    toast.success('Room added');
+    toast.success('Sala agregada');
     await load();
   }
 
@@ -148,7 +148,7 @@ export function SchedulingSettings() {
   async function deleteRoom(room: ClinicRoom) {
     if (
       !window.confirm(
-        `Delete "${room.name}"? Appointments in it become unassigned.`
+        `¿Eliminar "${room.name}"? Las citas en esa sala quedarán sin asignar.`
       )
     ) {
       return;
@@ -158,7 +158,7 @@ export function SchedulingSettings() {
     });
     const body = await response.json();
     if (!response.ok) return toast.error(body.error);
-    toast.success('Room deleted');
+    toast.success('Sala eliminada');
     await load();
   }
 
@@ -185,7 +185,7 @@ export function SchedulingSettings() {
         })),
       }),
     });
-    toast.success('Staff scheduling enabled with weekday availability');
+    toast.success('Agenda de personal activada con disponibilidad entre semana');
     await load();
   }
 
@@ -197,7 +197,7 @@ export function SchedulingSettings() {
     });
     const body = await response.json();
     if (!response.ok) return toast.error(body.error);
-    toast.success('Reminder policy saved');
+    toast.success('Política de recordatorios guardada');
     await load();
   }
 
@@ -209,7 +209,7 @@ export function SchedulingSettings() {
     });
     const body = await response.json();
     if (!response.ok) return toast.error(body.error);
-    toast.success('Scheduling timezone saved');
+    toast.success('Zona horaria guardada');
   }
 
   if (loading) {
@@ -225,8 +225,8 @@ export function SchedulingSettings() {
       <Card className="p-5">
         <Heading
           icon={CalendarClock}
-          title="Scheduling timezone"
-          description="The default timezone used for staff setup, slot labels, and new appointments."
+          title="Zona horaria"
+          description="La zona horaria predeterminada para el personal, los horarios disponibles y las nuevas citas."
         />
         <div className="mt-4 flex gap-2">
           <Input
@@ -236,15 +236,15 @@ export function SchedulingSettings() {
             placeholder="America/New_York"
           />
           <Button variant="outline" onClick={saveTimezone} disabled={!canEdit}>
-            Save
+            Guardar
           </Button>
         </div>
       </Card>
       <Card className="p-5">
         <Heading
           icon={DoorOpen}
-          title="Rooms"
-          description="Your operatories. The Rooms board in Appointments shows one column per active room — add, rename, recolor, or deactivate them here."
+          title="Salas"
+          description="Tus consultorios. El tablero de Salas en Citas muestra una columna por sala activa — agrega, renombra, cambia el color o desactívalas aquí."
         />
         <div className="mt-4 grid gap-2 sm:grid-cols-[auto_1fr_auto]">
           <input
@@ -253,17 +253,17 @@ export function SchedulingSettings() {
             onChange={(event) => setRoomColor(event.target.value)}
             disabled={!canEdit}
             className="border-border bg-background h-9 w-12 cursor-pointer rounded-lg border p-1"
-            aria-label="New room color"
+            aria-label="Color de la sala nueva"
           />
           <Input
             value={roomName}
             onChange={(event) => setRoomName(event.target.value)}
-            placeholder="Room 4…"
+            placeholder="Sala 4…"
             disabled={!canEdit}
           />
           <Button onClick={addRoom} disabled={!canEdit || !roomName.trim()}>
             <Plus className="size-4" />
-            Add
+            Agregar
           </Button>
         </div>
         <div className="divide-border border-border mt-4 divide-y rounded-lg border">
@@ -280,7 +280,7 @@ export function SchedulingSettings() {
                 }
                 disabled={!canEdit}
                 className="border-border bg-background h-7 w-9 cursor-pointer rounded border p-0.5"
-                aria-label={`${room.name} color`}
+                aria-label={`Color de ${room.name}`}
               />
               <Input
                 key={room.id}
@@ -304,14 +304,14 @@ export function SchedulingSettings() {
                   }
                   disabled={!canEdit}
                 />
-                Active
+                Activa
               </span>
               <Button
                 variant="outline"
                 size="icon"
                 onClick={() => void deleteRoom(room)}
                 disabled={!canEdit}
-                aria-label={`Delete ${room.name}`}
+                aria-label={`Eliminar ${room.name}`}
               >
                 <Trash2 className="size-4" />
               </Button>
@@ -319,7 +319,7 @@ export function SchedulingSettings() {
           ))}
           {!rooms.length && (
             <p className="text-muted-foreground p-4 text-sm">
-              No rooms yet.
+              Aún no hay salas.
             </p>
           )}
         </div>
@@ -328,14 +328,14 @@ export function SchedulingSettings() {
       <Card className="p-5">
         <Heading
           icon={CalendarClock}
-          title="Services"
-          description="Durations drive slot discovery and conflict protection."
+          title="Servicios"
+          description="Las duraciones guían la disponibilidad de horarios y la protección contra conflictos."
         />
         <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_120px_auto]">
           <Input
             value={serviceName}
             onChange={(e) => setServiceName(e.target.value)}
-            placeholder="Consultation, estimate, installation…"
+            placeholder="Visita inicial, limpieza, extracción…"
             disabled={!canEdit}
           />
           <Input
@@ -350,7 +350,7 @@ export function SchedulingSettings() {
             disabled={!canEdit || !serviceName.trim()}
           >
             <Plus className="size-4" />
-            Add
+            Agregar
           </Button>
         </div>
         <div className="divide-border border-border mt-4 divide-y rounded-lg border">
@@ -362,7 +362,7 @@ export function SchedulingSettings() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{service.name}</p>
                 <p className="text-muted-foreground text-xs">
-                  {service.duration_minutes} minutes
+                  {service.duration_minutes} minutos
                 </p>
               </div>
               <Switch
@@ -374,7 +374,7 @@ export function SchedulingSettings() {
           ))}
           {!services.length && (
             <p className="text-muted-foreground p-4 text-sm">
-              No services yet.
+              Aún no hay servicios.
             </p>
           )}
         </div>
@@ -383,8 +383,8 @@ export function SchedulingSettings() {
       <Card className="p-5">
         <Heading
           icon={UsersRound}
-          title="Bookable staff"
-          description="New staff receive Monday–Friday, 9–5 availability in their local timezone."
+          title="Personal con agenda"
+          description="El personal nuevo recibe disponibilidad de lunes a viernes, de 9 a 17, en su zona horaria."
         />
         <select
           className="border-border bg-background mt-4 h-9 w-full rounded-lg border px-3 text-sm"
@@ -395,7 +395,7 @@ export function SchedulingSettings() {
             event.currentTarget.value = '';
           }}
         >
-          <option value="">Enable scheduling for a team member…</option>
+          <option value="">Activar agenda para un miembro…</option>
           {members
             .filter(
               (member) => !staff.some((item) => item.user_id === member.user_id)
@@ -412,7 +412,7 @@ export function SchedulingSettings() {
               key={item.id}
               className="border-border bg-muted rounded-full border px-3 py-1.5 text-xs"
             >
-              {item.profile?.full_name ?? 'Team member'} · {item.timezone}
+              {item.profile?.full_name ?? 'Miembro del equipo'} · {item.timezone}
             </span>
           ))}
         </div>
@@ -421,8 +421,8 @@ export function SchedulingSettings() {
       <Card className="p-5">
         <Heading
           icon={BellRing}
-          title="WhatsApp reminders"
-          description="Defaults are 24 hours and 2 hours. They remain off until an approved Utility template is selected."
+          title="Recordatorios por WhatsApp"
+          description="Los valores predeterminados son 24 horas y 2 horas. Permanecen apagados hasta elegir una plantilla aprobada."
         />
         <div className="mt-4 space-y-3">
           {rules.map((rule, index) => (
@@ -431,7 +431,7 @@ export function SchedulingSettings() {
               className="border-border grid items-end gap-3 rounded-lg border p-3 sm:grid-cols-[140px_1fr_auto]"
             >
               <div>
-                <Label>Minutes before</Label>
+                <Label>Minutos antes</Label>
                 <Input
                   type="number"
                   min={1}
@@ -449,7 +449,7 @@ export function SchedulingSettings() {
                 />
               </div>
               <div>
-                <Label>Approved utility template</Label>
+                <Label>Plantilla aprobada</Label>
                 <select
                   className="border-border bg-background h-9 w-full rounded-lg border px-3 text-sm"
                   value={rule.template_id ?? ''}
@@ -470,7 +470,7 @@ export function SchedulingSettings() {
                     )
                   }
                 >
-                  <option value="">Choose a template…</option>
+                  <option value="">Elige una plantilla…</option>
                   {templates.map((template) => (
                     <option key={template.id} value={template.id}>
                       {template.name}
@@ -490,13 +490,13 @@ export function SchedulingSettings() {
                     )
                   }
                 />
-                <span className="text-muted-foreground text-xs">Active</span>
+                <span className="text-muted-foreground text-xs">Activa</span>
               </div>
             </div>
           ))}
         </div>
         <Button className="mt-4" onClick={saveRules} disabled={!canEdit}>
-          Save reminder policy
+          Guardar política de recordatorios
         </Button>
       </Card>
     </div>

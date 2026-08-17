@@ -61,6 +61,21 @@ const statusStyle: Record<Appointment['status'], string> = {
   no_show: 'border-rose-500/30 bg-rose-500/10 text-rose-200',
 };
 
+const STATUS_LABEL: Record<Appointment['status'], string> = {
+  pending: 'Pendiente',
+  confirmed: 'Confirmada',
+  completed: 'Completada',
+  cancelled: 'Cancelada',
+  no_show: 'No se presentó',
+};
+
+const VIEW_LABEL: Record<View, string> = {
+  rooms: 'Salas',
+  month: 'Mes',
+  week: 'Semana',
+  agenda: 'Agenda',
+};
+
 export default function AppointmentsPage() {
   const [view, setView] = useState<View>('rooms');
   const [cursor, setCursor] = useState(new Date());
@@ -141,7 +156,7 @@ export default function AppointmentsPage() {
       setContacts((data ?? []) as Contact[]);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Could not load appointments'
+        error instanceof Error ? error.message : 'No se pudieron cargar las citas'
       );
     } finally {
       setLoading(false);
@@ -192,7 +207,7 @@ export default function AppointmentsPage() {
       toast.error(body.error);
       return;
     }
-    toast.success(`Appointment marked ${status.replace('_', ' ')}`);
+    toast.success(`Cita marcada como ${STATUS_LABEL[status]}`);
     setSelected(null);
     await load();
   }
@@ -209,7 +224,7 @@ export default function AppointmentsPage() {
       return;
     }
     toast.success(
-      `Appointment rescheduled · ${body.reminders_scheduled} reminders scheduled`
+      `Cita reagendada · ${body.reminders_scheduled} recordatorios programados`
     );
     setSelected(null);
     await load();
@@ -227,7 +242,7 @@ export default function AppointmentsPage() {
       return;
     }
     toast.success(
-      roomId ? 'Room assigned' : 'Room cleared — appointment unassigned'
+      roomId ? 'Sala asignada' : 'Sala liberada — cita sin asignar'
     );
     await load();
   }
@@ -238,18 +253,18 @@ export default function AppointmentsPage() {
         <div>
           <div className="border-primary/20 bg-primary/5 text-primary mb-2 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.2em] uppercase">
             <Clock3 className="size-3" />
-            Scheduling desk
+            Escritorio de citas
           </div>
           <h1 className="text-foreground text-2xl font-bold tracking-tight">
-            Appointments
+            Citas
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Book, confirm, and track every patient across your rooms.
+            Agenda, confirma y sigue a cada paciente en tus salas.
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)} disabled={!canWrite}>
           <Plus className="size-4" />
-          New appointment
+          Nueva cita
         </Button>
       </header>
 
@@ -265,7 +280,7 @@ export default function AppointmentsPage() {
               <ChevronLeft className="size-4" />
             </Button>
             <Button variant="outline" onClick={() => setCursor(new Date())}>
-              Today
+              Hoy
             </Button>
             <Button
               variant="outline"
@@ -287,18 +302,18 @@ export default function AppointmentsPage() {
             <FilterSelect
               value={staffFilter}
               onChange={setStaffFilter}
-              label="All staff"
+              label="Todo el personal"
             >
               {staff.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.profile?.full_name ?? 'Team member'}
+                  {item.profile?.full_name ?? 'Miembro del equipo'}
                 </option>
               ))}
             </FilterSelect>
             <FilterSelect
               value={serviceFilter}
               onChange={setServiceFilter}
-              label="All services"
+              label="Todos los servicios"
             >
               {services.map((item) => (
                 <option key={item.id} value={item.id}>
@@ -309,24 +324,26 @@ export default function AppointmentsPage() {
             <FilterSelect
               value={statusFilter}
               onChange={setStatusFilter}
-              label="All statuses"
+              label="Todos los estados"
             >
-              {[
-                'pending',
-                'confirmed',
-                'completed',
-                'cancelled',
-                'no_show',
-              ].map((item) => (
+              {(
+                [
+                  'pending',
+                  'confirmed',
+                  'completed',
+                  'cancelled',
+                  'no_show',
+                ] as Appointment['status'][]
+              ).map((item) => (
                 <option key={item} value={item}>
-                  {item.replace('_', ' ')}
+                  {STATUS_LABEL[item]}
                 </option>
               ))}
             </FilterSelect>
             <FilterSelect
               value={roomFilter}
               onChange={setRoomFilter}
-              label="All rooms"
+              label="Todas las salas"
             >
               {rooms
                 .filter((room) => room.is_active)
@@ -342,13 +359,13 @@ export default function AppointmentsPage() {
                   key={item}
                   onClick={() => setView(item)}
                   className={cn(
-                    'rounded-md px-3 py-1.5 text-xs font-medium capitalize transition',
+                    'rounded-md px-3 py-1.5 text-xs font-medium transition',
                     view === item
                       ? 'bg-card text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
-                  {item}
+                  {VIEW_LABEL[item]}
                 </button>
               ))}
             </div>
@@ -419,7 +436,7 @@ export default function AppointmentsPage() {
                     ))}
                     {items.length === 0 && view === 'week' && (
                       <div className="text-muted-foreground/50 mt-10 text-center text-[11px]">
-                        Open
+                        Libre
                       </div>
                     )}
                   </div>
@@ -543,7 +560,7 @@ function Agenda({
               statusStyle[appointment.status]
             )}
           >
-            {appointment.status.replace('_', ' ')}
+            {STATUS_LABEL[appointment.status]}
           </span>
         </button>
       ))}
@@ -557,9 +574,9 @@ function EmptyState() {
       <div className="border-primary/20 bg-primary/10 mb-3 flex size-12 items-center justify-center rounded-2xl border">
         <CalendarDays className="text-primary size-5" />
       </div>
-      <p className="font-medium">Your schedule is clear</p>
+      <p className="font-medium">Tu agenda está libre</p>
       <p className="text-muted-foreground mt-1 text-sm">
-        Create an appointment to start filling the calendar.
+        Crea una cita para empezar a llenar el calendario.
       </p>
     </div>
   );
@@ -615,13 +632,13 @@ function CreateAppointmentDialog({
       const body = await response.json();
       if (!response.ok) throw new Error(body.error);
       toast.success(
-        `Appointment created · ${body.reminders_scheduled} reminders scheduled`
+        `Cita creada · ${body.reminders_scheduled} recordatorios programados`
       );
       onOpenChange(false);
       await onCreated();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Could not create appointment'
+        error instanceof Error ? error.message : 'No se pudo crear la cita'
       );
     } finally {
       setSaving(false);
@@ -631,17 +648,17 @@ function CreateAppointmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New appointment</DialogTitle>
+          <DialogTitle>Nueva cita</DialogTitle>
           <DialogDescription>
-            Reserve time and automatically schedule eligible reminders.
+            Reserva un horario y programa automáticamente los recordatorios.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
-          <Field label="Contact">
+          <Field label="Paciente">
             <FilterSelect
               value={form.contact_id}
               onChange={(value) => setForm({ ...form, contact_id: value })}
-              label="Choose a contact"
+              label="Elige un paciente"
             >
               {contacts.map((contact) => (
                 <option key={contact.id} value={contact.id}>
@@ -651,11 +668,11 @@ function CreateAppointmentDialog({
             </FilterSelect>
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Service">
+            <Field label="Servicio">
               <FilterSelect
                 value={form.service_id}
                 onChange={(value) => setForm({ ...form, service_id: value })}
-                label="Choose service"
+                label="Elige un servicio"
               >
                 {services
                   .filter((service) => service.is_active)
@@ -666,29 +683,29 @@ function CreateAppointmentDialog({
                   ))}
               </FilterSelect>
             </Field>
-            <Field label="Staff">
+            <Field label="Personal">
               <FilterSelect
                 value={form.staff_profile_id}
                 onChange={(value) =>
                   setForm({ ...form, staff_profile_id: value })
                 }
-                label="Choose staff"
+                label="Elige al personal"
               >
                 {staff
                   .filter((item) => item.is_bookable)
                   .map((item) => (
                     <option key={item.id} value={item.id}>
-                      {item.profile?.full_name ?? 'Team member'}
+                      {item.profile?.full_name ?? 'Miembro del equipo'}
                     </option>
                   ))}
               </FilterSelect>
             </Field>
           </div>
-          <Field label="Room">
+          <Field label="Sala">
             <FilterSelect
               value={form.room_id}
               onChange={(value) => setForm({ ...form, room_id: value })}
-              label="No room"
+              label="Sin sala"
             >
               {rooms
                 .filter((room) => room.is_active)
@@ -699,7 +716,7 @@ function CreateAppointmentDialog({
                 ))}
             </FilterSelect>
           </Field>
-          <Field label="Starts">
+          <Field label="Inicia">
             <Input
               type="datetime-local"
               value={form.starts_at}
@@ -708,19 +725,19 @@ function CreateAppointmentDialog({
               }
             />
           </Field>
-          <Field label="Notes">
+          <Field label="Notas">
             <Input
               value={form.notes}
               onChange={(event) =>
                 setForm({ ...form, notes: event.target.value })
               }
-              placeholder="Access notes, preparation, special requests…"
+              placeholder="Notas, preparación, solicitudes especiales…"
             />
           </Field>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Cancelar
           </Button>
           <Button
             onClick={submit}
@@ -733,7 +750,7 @@ function CreateAppointmentDialog({
             }
           >
             {saving && <Loader2 className="size-4 animate-spin" />}
-            Reserve time
+            Reservar horario
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -786,15 +803,15 @@ function AppointmentDetail({
             <DialogTitle>{appointment.service?.name}</DialogTitle>
             <span
               className={cn(
-                'rounded-full border px-2 py-1 text-[10px] font-semibold capitalize',
+                'rounded-full border px-2 py-1 text-[10px] font-semibold',
                 statusStyle[appointment.status]
               )}
             >
-              {appointment.status.replace('_', ' ')}
+              {STATUS_LABEL[appointment.status]}
             </span>
           </div>
           <DialogDescription>
-            Appointment revision {appointment.revision}
+            Revisión de cita {appointment.revision}
           </DialogDescription>
         </DialogHeader>
         <div className="border-border bg-muted/30 grid gap-3 rounded-xl border p-4">
@@ -819,7 +836,15 @@ function AppointmentDetail({
           </div>
           <div className="flex items-center gap-3">
             <DoorOpen className="text-primary size-4" />
-            <span>{appointment.room?.name ?? 'No room assigned'}</span>
+            <span className="flex items-center gap-2">
+              {appointment.room && (
+                <span
+                  className="size-2.5 rounded-full"
+                  style={{ backgroundColor: appointment.room.color }}
+                />
+              )}
+              {appointment.room?.name ?? 'Sin sala asignada'}
+            </span>
           </div>
         </div>
         {canWrite && active && (
@@ -837,7 +862,7 @@ function AppointmentDetail({
                 onClick={() => onTransition(appointment, 'confirmed')}
               >
                 <Check className="size-4" />
-                Confirm
+                Confirmar
               </Button>
             )}
             {appointment.status === 'confirmed' && (
@@ -847,7 +872,7 @@ function AppointmentDetail({
                   onClick={() => onTransition(appointment, 'completed')}
                 >
                   <Check className="size-4" />
-                  Complete
+                  Completar
                 </Button>
                 <Button
                   size="sm"
@@ -855,7 +880,7 @@ function AppointmentDetail({
                   onClick={() => onTransition(appointment, 'no_show')}
                 >
                   <MoreHorizontal className="size-4" />
-                  No show
+                  No se presentó
                 </Button>
               </>
             )}
@@ -871,7 +896,7 @@ function AppointmentDetail({
                   onClick={() => onTransition(appointment, 'cancelled')}
                 >
                   <X className="size-4" />
-                  Cancel
+                  Cancelar
                 </Button>
               </>
             )}
@@ -901,7 +926,7 @@ function RescheduleControl({
     return (
       <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
         <CalendarDays className="size-4" />
-        Reschedule
+        Reagendar
       </Button>
     );
   }
@@ -913,7 +938,7 @@ function RescheduleControl({
         onChange={(event) => setValue(event.target.value)}
       />
       <Button size="sm" onClick={() => onSave(appointment, value)}>
-        Save
+        Guardar
       </Button>
     </div>
   );
@@ -939,9 +964,9 @@ function AssignRoomControl({
         value={value}
         onChange={(event) => setValue(event.target.value)}
         className="border-border bg-background text-foreground focus:ring-primary/30 h-9 flex-1 rounded-lg border px-3 text-xs outline-none focus:ring-2"
-        aria-label="Assign room"
+        aria-label="Asignar sala"
       >
-        <option value="">No room</option>
+        <option value="">Sin sala</option>
         {activeRooms.map((room) => (
           <option key={room.id} value={room.id}>
             {room.name}
@@ -961,7 +986,7 @@ function AssignRoomControl({
         }}
       >
         {saving && <Loader2 className="size-4 animate-spin" />}
-        Assign
+        Asignar
       </Button>
     </div>
   );

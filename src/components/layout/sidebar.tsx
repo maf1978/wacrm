@@ -64,6 +64,7 @@ const ROLE_CHIP: Record<
   },
 };
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ToothIcon } from '@/components/brand/tooth-icon';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -183,7 +184,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
         <div className="border-border flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4">
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-lg">
-              <MessageSquare className="h-4 w-4" />
+              <ToothIcon size={17} />
             </div>
             <span className="text-foreground text-sm font-semibold">
               {t('title')}

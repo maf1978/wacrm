@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
  * staff can see exactly which patient is in which room right now. A
  * red "now" line tracks the current time when viewing today, and
  * appointments without a room (WhatsApp self-bookings) collect in an
- * "Unassigned" column at the end.
+ * "Sin asignar" column at the end.
  */
 
 const DAY_START_HOUR = 8; // 08:00 — first visible hour
@@ -100,10 +100,10 @@ export function RoomsView({
         <div className="border-primary/20 bg-primary/10 mb-3 flex size-12 items-center justify-center rounded-2xl border">
           <DoorOpen className="text-primary size-5" />
         </div>
-        <p className="font-medium">No rooms yet</p>
+        <p className="font-medium">Sin salas aún</p>
         <p className="text-muted-foreground mt-1 max-w-sm text-sm">
-          Add your operatories in Settings → Scheduling and they will
-          appear here as columns on the board.
+          Agrega tus salas en Configuración → Programación y aparecerán
+          aquí como columnas del tablero.
         </p>
       </div>
     );
@@ -130,7 +130,8 @@ export function RoomsView({
                 {room.name}
               </span>
               <span className="text-muted-foreground text-[10px] tracking-widest uppercase">
-                {items.filter((a) => a.status !== 'cancelled').length} patient
+                {items.filter((a) => a.status !== 'cancelled').length}{' '}
+                paciente
                 {items.filter((a) => a.status !== 'cancelled').length === 1
                   ? ''
                   : 's'}
@@ -141,10 +142,10 @@ export function RoomsView({
             <div className="flex flex-col items-center gap-1 px-2 py-3">
               <span className="text-muted-foreground flex items-center gap-1.5 text-sm font-semibold">
                 <span className="bg-muted-foreground/50 size-2.5 rounded-full" />
-                Unassigned
+                Sin asignar
               </span>
               <span className="text-muted-foreground text-[10px] tracking-widest uppercase">
-                {unassigned.length} patient
+                {unassigned.length} paciente
                 {unassigned.length === 1 ? '' : 's'}
               </span>
             </div>
@@ -188,6 +189,7 @@ export function RoomsView({
                 <RoomBlock
                   key={appointment.id}
                   appointment={appointment}
+                  color={room.color}
                   onClick={() => onSelect(appointment)}
                 />
               ))}
@@ -208,9 +210,19 @@ export function RoomsView({
                 <RoomBlock
                   key={appointment.id}
                   appointment={appointment}
+                  color="#64748b"
                   onClick={() => onSelect(appointment)}
                 />
               ))}
+            </div>
+          )}
+
+          {/* Empty-day hint */}
+          {appointments.length === 0 && (
+            <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center pl-14">
+              <p className="text-muted-foreground/60 text-sm">
+                No hay citas para este día — crea una para comenzar.
+              </p>
             </div>
           )}
 
@@ -231,11 +243,23 @@ export function RoomsView({
   );
 }
 
+function initialsOf(name?: string | null): string {
+  if (!name) return '?';
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
 function RoomBlock({
   appointment,
+  color,
   onClick,
 }: {
   appointment: Appointment;
+  color: string;
   onClick: () => void;
 }) {
   const start = new Date(appointment.starts_at);
@@ -256,21 +280,38 @@ function RoomBlock({
   }
   if (top + height > GRID_HEIGHT) height = Math.max(GRID_HEIGHT - top, 18);
 
+  const name = appointment.contact?.name || appointment.contact?.phone;
+
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'absolute inset-x-1 overflow-hidden rounded-md border px-1.5 py-0.5 text-left transition hover:-translate-y-px hover:shadow-md',
+        'absolute inset-x-1 overflow-hidden rounded-md border py-0.5 pr-1.5 pl-2 text-left transition hover:-translate-y-px hover:shadow-md',
         statusStyle[appointment.status]
       )}
       style={{ top, height }}
     >
+      {/* Room-color accent bar */}
+      <span
+        className="absolute inset-y-0 left-0 w-[3px]"
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
+      />
       <span className="block text-[10px] font-semibold tabular-nums">
         {format(start, 'h:mm')}–{format(end, 'h:mm a')}
       </span>
-      <span className="block truncate text-[11px] font-medium">
-        {appointment.contact?.name || appointment.contact?.phone}
+      <span className="flex min-w-0 items-center gap-1.5">
+        <span
+          className="flex size-3.5 shrink-0 items-center justify-center rounded-full text-[7px] font-bold"
+          style={{ backgroundColor: `${color}33`, color }}
+          aria-hidden="true"
+        >
+          {initialsOf(name)}
+        </span>
+        <span className="block truncate text-[11px] font-medium">
+          {name}
+        </span>
       </span>
       <span className="block truncate text-[10px] opacity-80">
         {appointment.service?.name}
