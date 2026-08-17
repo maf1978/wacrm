@@ -61,6 +61,7 @@ export default function HomePage() {
             <a href="#producto">Producto</a>
             <a href="#soluciones">Soluciones</a>
             <a href="#integraciones">Integraciones</a>
+            <a href="/gutidental">GutiDental</a>
           </nav>
 
           <div className={styles.navActions}>
