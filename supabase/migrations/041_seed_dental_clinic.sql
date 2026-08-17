@@ -3,8 +3,8 @@
 --
 -- Gives the app a turnkey dental-practice start:
 --
---   - `appointment_services`: default dental treatments (cleaning,
---     filling, extraction, root canal, whitening, ...).
+--   - `appointment_services`: default dental treatments (visita
+--     inicial, limpieza, extracción / root canal — all 30 min).
 --   - `ai_knowledge_documents` + `ai_knowledge_chunks`: starter FAQs
 --     (hours, booking, pre/post-op care, payments, emergencies) that
 --     power the WhatsApp AI auto-reply.
@@ -40,14 +40,9 @@ BEGIN
   ) THEN
     INSERT INTO appointment_services (account_id, name, description, duration_minutes)
     VALUES
-      (p_account_id, 'Consulta general',     'Evaluación completa del paciente', 30),
-      (p_account_id, 'Limpieza dental',      'Profilaxis y pulido dental',        45),
-      (p_account_id, 'Empaste (obturación)', 'Restauración de caries',            45),
-      (p_account_id, 'Extracción dental',    'Extracción simple o compleja',      30),
-      (p_account_id, 'Endodoncia',           'Tratamiento de conducto',           90),
-      (p_account_id, 'Blanqueamiento',       'Blanqueamiento profesional',        60),
-      (p_account_id, 'Corona o puente',      'Prótesis fija',                     60),
-      (p_account_id, 'Revisión / control',   'Cita de seguimiento',               30);
+      (p_account_id, 'Visita inicial',           'Primera evaluación completa del paciente', 30),
+      (p_account_id, 'Limpieza',                 'Profilaxis y pulido dental',               30),
+      (p_account_id, 'Extracción / Root canal',  'Extracción dental o tratamiento de conducto', 30);
   END IF;
 
   -- Starter clinic FAQs (only when the account has no knowledge yet).

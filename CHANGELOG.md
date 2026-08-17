@@ -9,6 +9,24 @@ Versions follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0, `MINOR` bumps cover new modules; `PATCH` bumps cover bug fixes
 and polish.
 
+## [0.9.1] — 2026-08-17
+
+Adds the practice's core 30-minute service menu (visita inicial,
+limpieza, extracción / root canal).
+
+> **Migration required:** apply `supabase/migrations/042_clinic_services.sql`
+> (adds the three services to every account that doesn't already have
+> them by name; idempotent). The 041 fresh-install seed now carries the
+> same three services.
+
+### Added
+
+- **Core service menu.** New installs seed exactly `Visita inicial`,
+  `Limpieza`, and `Extracción / Root canal` — all 30 minutes.
+  Existing accounts receive the same three via migration 042 without
+  touching their current rows; older seeded services can be
+  deactivated in Settings → Scheduling.
+
 ## [0.9.0] — 2026-08-07
 
 Adds a **rooms occupancy board** for dental/clinical practices: the
