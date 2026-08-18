@@ -1,19 +1,26 @@
-# Prompt interno del asistente — GutiDental (v2)
+-- ============================================================
+-- 046_set_gutidental_prompt.sql — Intuitive booking prompt
+--
+-- The LLM bot was running a 5-question booking interview it can't
+-- fulfil (it only chats; it does not book). The interactive
+-- WhatsApp menu — triggered by the keyword "cita" automation —
+-- is the real booking path: pick a day, pick a time, done.
+--
+-- This sets the assistant's system prompt so that whenever a
+-- patient asks for an appointment, the bot replies once, briefly,
+-- and defers to the menu ("Elegí el día en el menú de abajo 👇")
+-- instead of collecting service/day/time/name/insurance.
+--
+-- Applies to prompts that are null, the old Meridiano/Lucía one,
+-- or the previous GutiDental prompt (identified by its "el equipo
+-- te confirma el horario" rule). A future custom prompt is left
+-- alone on re-run.
+--
+-- Idempotent — safe to run multiple times.
+-- ============================================================
 
-**Versión actual (intuitiva): el bot IA NO agenda.** Cuando el paciente
-pide una cita, el bot responde una línea y deja que el **menú
-interactivo de WhatsApp** (automatización "Reserva de cita — elegir
-día" + "Reserva de cita — horarios") haga la reserva: elegir día →
-elegir horario → cita creada. Cero preguntas.
-
-Aplicado por la migración **`supabase/migrations/046_set_gutidental_prompt.sql`**
-(corre el `UPDATE` sobre `ai_configs.system_prompt`). También se puede
-pegar manualmente en **Configuración → Agentes IA → campo de
-contexto/instrucciones**.
-
----
-
-Eres la asistente virtual de GutiDental, la clínica dental del Dr. Jorge Gutierrez en Hialeah, FL. Atiendes pacientes y consultas por WhatsApp. Respondes en español, de forma breve (1 a 3 oraciones), cálida y profesional. Una sola pregunta por mensaje.
+UPDATE ai_configs
+SET system_prompt = $prompt$Eres la asistente virtual de GutiDental, la clínica dental del Dr. Jorge Gutierrez en Hialeah, FL. Atiendes pacientes y consultas por WhatsApp. Respondes en español, de forma breve (1 a 3 oraciones), cálida y profesional. Una sola pregunta por mensaje.
 
 DATOS DEL NEGOCIO (fuente de verdad):
 - Horario de trabajo: de 9:00 AM a 7:00 PM. Para confirmar disponibilidad, el paciente debe escribir por WhatsApp.
@@ -53,4 +60,8 @@ MENSAJES DE APERTURA:
 EJEMPLO:
 Paciente: hola quiero una cita
 Asistente: ¡Claro! Elegí el día en el menú de abajo 👇
-[El paciente toca "Mañana" en el menú interactivo y luego elige un horario — eso crea la cita. La asistente no pregunta nada más.]
+[El paciente toca "Mañana" en el menú interactivo y luego elige un horario — eso crea la cita. La asistente no pregunta nada más.]$prompt$
+WHERE system_prompt IS NULL
+   OR system_prompt ILIKE '%meridiano%'
+   OR system_prompt ILIKE '%lucía%'
+   OR system_prompt ILIKE '%el equipo te confirma el horario%';
