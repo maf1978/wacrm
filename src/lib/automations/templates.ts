@@ -10,7 +10,8 @@ export type TemplateSlug =
   | 'out_of_office'
   | 'lead_qualifier'
   | 'follow_up_reminder'
-  | 'book_appointment'
+  | 'book_appointment_dates'
+  | 'book_appointment_slots'
 
 export interface TemplateStepSeed {
   step_type: AutomationStepType
@@ -126,15 +127,45 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
       },
     ],
   },
-  book_appointment: {
-    slug: 'book_appointment',
-    name: 'Reserva de cita',
+  book_appointment_dates: {
+    slug: 'book_appointment_dates',
+    name: 'Reserva de cita — elegir día',
     description:
-      'Cuando el paciente escribe "cita", "reservar" o "agendar", le envía los horarios disponibles del día ({{vars.date}}) para que elija y reserve. Requiere completar el Service ID del tratamiento y tener el personal con agenda.',
+      'Cuando el paciente escribe "cita", "reservar" o "agendar", le ofrece elegir Hoy, Mañana o Pasado mañana. Requiere también la plantilla "Reserva de cita — horarios".',
     trigger_type: 'keyword_match',
     trigger_config: {
       keywords: ['cita', 'reservar', 'agendar', 'turno', 'horario'],
       match_type: 'contains',
+    },
+    steps: [
+      {
+        step_type: 'send_list',
+        step_config: {
+          kind: 'list',
+          body: '¿Para qué día querés tu cita? Elegí una opción.',
+          button_label: 'Ver días',
+          sections: [
+            {
+              title: 'Elegí un día',
+              rows: [
+                { id: 'date:+0', title: 'Hoy', description: 'Horarios de hoy' },
+                { id: 'date:+1', title: 'Mañana', description: 'Horarios de mañana' },
+                { id: 'date:+2', title: 'Pasado mañana', description: 'Horarios del día siguiente' },
+              ],
+            },
+          ],
+        },
+      },
+    ],
+  },
+  book_appointment_slots: {
+    slug: 'book_appointment_slots',
+    name: 'Reserva de cita — horarios',
+    description:
+      'Cuando el paciente elige un día (Hoy / Mañana / Pasado mañana), le muestra los horarios disponibles reales de ese día para reservar. Requiere completar el Service ID del tratamiento.',
+    trigger_type: 'interactive_reply',
+    trigger_config: {
+      reply_ids: ['date:+0', 'date:+1', 'date:+2'],
     },
     steps: [
       {

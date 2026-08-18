@@ -858,7 +858,9 @@ async function processMessage(
   // Today's date in the account's scheduling timezone, exposed to
   // automations as {{vars.date}} so steps like offer_appointment_slots
   // can offer "today" without a fixed date. Defaults to the clinic's
-  // timezone when the account row has none.
+  // timezone when the account row has none. When the patient tapped a
+  // date-menu row id like `date:+N`, the var becomes today + N days so
+  // the slot offer follows the chosen day.
   const [{ data: account }] = await Promise.all([
     supabaseAdmin()
       .from('accounts')
@@ -867,12 +869,21 @@ async function processMessage(
       .maybeSingle(),
   ]);
   const timezone = account?.scheduling_timezone || 'America/New_York';
-  const today = new Intl.DateTimeFormat('en-CA', {
-    timeZone: timezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
+  const formatInTz = (d: Date) =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(d);
+  let dateVar = formatInTz(new Date());
+  const relativeDay = interactiveReplyId?.match(/^date:\+(\d+)$/);
+  if (relativeDay) {
+    const plusDays = Number(relativeDay[1]);
+    const shifted = new Date();
+    shifted.setUTCDate(shifted.getUTCDate() + plusDays);
+    dateVar = formatInTz(shifted);
+  }
 
   for (const triggerType of automationTriggers) {
     runAutomationsForTrigger({
@@ -885,7 +896,7 @@ async function processMessage(
         // Only set on interactive taps; drives the interactive_reply
         // trigger's exact-id match.
         interactive_reply_id: interactiveReplyId ?? undefined,
-        vars: { date: today },
+        vars: { date: dateVar },
       },
     }).catch((err) => console.error('[automations] dispatch failed:', err));
   }
